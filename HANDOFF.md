@@ -64,7 +64,9 @@
    ⚠️ 新問法未見過時規則式約 55%，其餘靠 Gemma（預熱後）。新增別名後務必跑 `mvn test` 與 run-natural
 4. ~~裝置端辨識開關~~ ✅ 設定頁「語音辨識不使用 Google」→ `startListening {offline:true}` 一律用 Whisper；說話時暫停 Gemma 讓出 CPU。模擬器實測 ✅
    - 待確認：敬老卡等服務在臺北通內實際提供什麼（清單依據 id.taipei/tpcd 未核實）
-5. 英文問題用英文回答（Gemma 在裝置上翻譯後端答案、英文 TTS）
+5. ~~英文回答~~ ✅（待實測）：英文問句或語言選 English → 英文回答＋英文 TTS。
+   服務說明用 `service-en.json`（**開發階段預先翻譯，不是即時 AI**，展示時要這樣說明）；公車用官方英文站名（後端新增 stopEn／destinationEn）。
+   限制：英文站名目前無法用來比對站牌（需說中文站名或選按鈕）
 6. 建 PR：`device/whisper-offline` → main
 7. 實體手機測試
 

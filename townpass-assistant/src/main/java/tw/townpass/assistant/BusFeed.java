@@ -56,7 +56,8 @@ class BusFeed {
                 String name = row.path("nameZh").asText();
                 if (id > 0 && !name.isBlank()) {
                     routes.putIfAbsent(id, new Route(id, name, row.path("departureZh").asText(),
-                            row.path("destinationZh").asText()));
+                            row.path("destinationZh").asText(), row.path("departureEn").asText(),
+                            row.path("destinationEn").asText()));
                 }
             }
             List<Stop> stops = new ArrayList<>();
@@ -67,7 +68,7 @@ class BusFeed {
                 String name = row.path("nameZh").asText();
                 if (id > 0 && routes.containsKey(routeId) && !name.isBlank()
                         && (direction == 0 || direction == 1)) {
-                    stops.add(new Stop(id, routeId, name, direction));
+                    stops.add(new Stop(id, routeId, name, direction, row.path("nameEn").asText()));
                 }
             }
             if (routes.isEmpty() || stops.isEmpty()) {
@@ -159,8 +160,17 @@ class BusFeed {
         }
     }
 
-    record Route(long id, String name, String departure, String destination) {}
-    record Stop(long id, long routeId, String name, int direction) {}
+    // *En：官方資料的英文名稱（英文回答用），可能為空字串
+    record Route(long id, String name, String departure, String destination, String departureEn, String destinationEn) {
+        Route(long id, String name, String departure, String destination) {
+            this(id, name, departure, destination, "", "");
+        }
+    }
+    record Stop(long id, long routeId, String name, int direction, String nameEn) {
+        Stop(long id, long routeId, String name, int direction) {
+            this(id, routeId, name, direction, "");
+        }
+    }
     record StopKey(long routeId, long stopId) {}
     record Topology(List<Route> routes, List<Stop> stops) {}
     record Snapshot(Instant updatedAt, Map<StopKey, Integer> estimates) {}

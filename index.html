@@ -131,6 +131,27 @@ function onNativeVoice(d){
 }
 // 離線模式（設定頁）：語音辨識一律用裝置上的 Whisper，證明不依賴 Google；記在本機
 try{state.offlineVoice=localStorage.getItem('offlineVoice')==='1'}catch(e){state.offlineVoice=false}
+// ── 英文：問題是英文（或語音語言選 English）就用英文回答 ──
+// 服務說明的英文版是開發階段預先翻譯（service-en.json），不是執行時 AI 產生；
+// 公車用官方資料的英文站名；其餘固定句。
+let serviceEn=null;
+fetch(location.origin+'/service-en.json').then(r=>r.ok?r.json():null).then(j=>{serviceEn=j}).catch(()=>{});
+function isEnglishText(t){const latin=(t.match(/[A-Za-z]/g)||[]).length,cjk=(t.match(/[㐀-鿿]/g)||[]).length;return latin>=3&&latin>cjk*2;}
+function englishAnswer(r){
+  const a=r.arrivals&&r.arrivals[0];
+  if(a){const st={DUE:'arriving now',NOT_DEPARTED:'not departed yet',SKIPPED:'not stopping at this stop',LAST_PASSED:'the last bus has passed',NO_SERVICE:'no service today',NO_ESTIMATE:'no official estimate available'}[a.status];
+    const eta=a.status==='ESTIMATED'&&a.estimateSeconds!=null?`about ${Math.max(1,Math.ceil(a.estimateSeconds/60))} minute${Math.ceil(a.estimateSeconds/60)>1?'s':''}`:(st||'no official estimate available');
+    return `Bus ${a.route} at ${a.stopEn||a.stop}, toward ${a.destinationEn||a.destination}: ${eta}. Arrival times are estimates.`;}
+  if(r.type==='CLARIFY'){
+    if(r.choices&&r.choices.length)return 'There are several stops or directions. Please say where you are heading, or choose below.';
+    if(r.context&&r.context.route&&!r.context.stop)return `Which stop for bus ${r.context.route}? Please say the stop name.`;
+    if(r.context&&r.context.draft)return 'Please tell me the road name, address or a nearby landmark.';
+    return 'Please tell me the bus route and the stop.';}
+  if(r.type==='OUT_OF_SCOPE')return "I couldn't find a matching TaipeiPASS service. You can ask about accounts, cards, city applications, bills, offers, transport or places.\n\nIf you need help, tap below to call the 1999 citizen hotline.";
+  if(r.type==='UPSTREAM_UNAVAILABLE')return 'Official bus data is not available right now. Please try again later or check the Taipei e-bus website.';
+  if(r.type==='NO_RESULT')return 'No matching official data was found. Please check the route, stop or direction.';
+  return (serviceEn&&r.service&&serviceEn[r.service.id])||r.speech;
+}
 function stopSpeak(){if(tp)tpSend('stopSpeaking');else window.speechSynthesis?.cancel();}
 
 // ── 裝置端 LLM（Gemma 4 E4B，經 TownPass 原生 llm Handler）──
@@ -270,7 +291,7 @@ function startListening(){
   state.transcript='';state.recognitionBase='';state.recognitionFinal='';state.recognitionInterim='';
   render();
   // App 內由原生端收音；不可再用 getUserMedia 搶麥克風
-  if(tp){stopSpeak();tpSend('startListening',{offline:!!state.offlineVoice});return;}
+  if(tp){stopSpeak();tpSend('startListening',{offline:!!state.offlineVoice,lang:String(state.language).startsWith('en')?'en':'zh'});return;}
   startAudioMeter();
   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!Speech){toast('此瀏覽器不支援語音辨識，請改用文字輸入');cancelRecognition();state.screen='chat';render();input.focus();return;}
@@ -352,7 +373,7 @@ function stopListening(){
 function bubble(entry,index){const user=entry.role==='user',head=user?'你（語音轉文字）':'臺北通 助理';let buttons='';if(!user){buttons=`${entry.call?`<div class="actions"><button class="primary" data-call="${safe(entry.call)}">📞 撥打 ${safe(entry.call)} 市民熱線</button></div>`:''}<div class="divider"></div><button class="speak-again" data-speak="${index}">${icon('i-volume',19)} 播放回覆</button>`}return `<div class="bubble ${user?'user':'ai'}"><div class="bubble-head"><span class="bubble-avatar ${user?'user-avatar':''}">${icon(user?'i-user':'i-bot',19)}</span>${head}</div><div class="bubble-text">${safe(entry.text)}</div>${entry.url&&/^https:\/\//.test(entry.url)?`<div class="actions"><button class="primary" data-open="${index}">${icon('i-external',17)} ${entry.cta||'前往官方服務'}</button>${entry.edit?'<button class="secondary" id="editDraft">修改內容</button>':''}</div>`:''}${entry.choices&&entry.choices.length&&index===state.conversation.length-1?`<div class="actions">${entry.choices.map((c,i)=>`<button class="secondary" data-choice="${index}:${i}">${safe(c.label)}</button>`).join('')}</div>`:''}${buttons}</div>`}
 function chat(){let messages=state.conversation.map(bubble).join('');main.innerHTML=`<div class="chat"><div class="chat-meta">以臺北通既有功能為服務範圍</div>${messages||'<div class="empty">您可以直接說出需求，或在下方輸入文字。</div>'}${state.complaint&&state.complaint.stage==='location'?'<div class="warning">請補充地點；尚未送出任何正式陳情。</div>':''}</div>`;main.querySelectorAll('[data-call]').forEach(btn=>btn.onclick=()=>{const num=btn.dataset.call;if(tp)tp.postMessage(JSON.stringify({name:'phone_call',data:num}));else location.href='tel:'+num;});main.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=()=>{const [e,i]=btn.dataset.choice.split(':').map(Number);const ch=state.conversation[e].choices[i];state.apiContext=ch.context;send(ch.label)});main.querySelectorAll('[data-speak]').forEach(btn=>btn.onclick=()=>speak(state.conversation[+btn.dataset.speak].text));main.querySelectorAll('[data-open]').forEach(btn=>btn.onclick=()=>{let e=state.conversation[+btn.dataset.open];(navigator.onLine===false?toast('目前沒有網路，請連線後再開啟官方服務'):window.open(e.url,'_blank','noopener,noreferrer'))});const edit=$('editDraft');if(edit)edit.onclick=()=>{state.complaint={stage:'detail',location:state.complaint?.location||'',description:state.complaint?.description||''};addAI('請說出需要修改的陳情內容，或直接在下方輸入。')};main.scrollTop=main.scrollHeight;}
 function addAI(text,extra={}){state.conversation.push({role:'ai',text,...extra});if(state.screen!=='chat')return;render();if(state.autoSpeak)speak(text)}
-function speak(text){if(tp){tpSend('speak',{text:String(text||'').slice(0,1000)});return}if(!('speechSynthesis'in window)){toast('此裝置不支援語音朗讀');return}try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang=state.language;u.rate=.92;u.pitch=1;let voices=speechSynthesis.getVoices();let match=voices.find(v=>v.lang.toLowerCase()===state.language.toLowerCase())||voices.find(v=>v.lang.startsWith('zh'));if(match)u.voice=match;speechSynthesis.speak(u)}catch(e){toast('無法播放語音，請查看文字回覆')}}
+function speak(text){if(tp){tpSend('speak',{text:String(text||'').slice(0,1000),lang:state.answerLang==='en'?'en':'zh'});return}if(!('speechSynthesis'in window)){toast('此裝置不支援語音朗讀');return}try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang=state.language;u.rate=.92;u.pitch=1;let voices=speechSynthesis.getVoices();let match=voices.find(v=>v.lang.toLowerCase()===state.language.toLowerCase())||voices.find(v=>v.lang.startsWith('zh'));if(match)u.voice=match;speechSynthesis.speak(u)}catch(e){toast('無法播放語音，請查看文字回覆')}}
 async function send(text){
  text=String(text||'').trim();if(!text||state.apiBusy)return;
  if([...text].length>1500){toast('最多支援1500字，請縮短內容');return;}
@@ -370,10 +391,12 @@ async function send(text){
      }
      state.apiContext=result.context||null;
      const service=result.service||{},url=service.officialUrl||'';
-     let answer=result.speech||'目前沒有可提供的答案。';
+     const english=String(state.language).startsWith('en')||isEnglishText(text)||(state.answerLang==='en'&&!!state.apiContext);
+     state.answerLang=english?'en':'zh';
+     let answer=english?englishAnswer(result):(result.speech||'目前沒有可提供的答案。');
      // 無法回答時提供官方聯絡方式與一鍵撥號（專案規格第 10 點）；走 TownPass 內建的 phone_call Handler
      const outOfScope=result.type==='OUT_OF_SCOPE';
-     if(outOfScope)answer+='\n\n如果需要協助，可以按下方按鈕，直接撥打臺北市民當家熱線 1999。';
+     if(outOfScope&&!english)answer+='\n\n如果需要協助，可以按下方按鈕，直接撥打臺北市民當家熱線 1999。';
      if(result.draft)answer+='\n\n陳情內容：'+result.draft.description+'\n地點：'+result.draft.location+'\n尚未正式送件。';
      // 補問（例如問方向、站牌、地點）朗讀完後自動開始聽，使用者不用再按麥克風
      state.awaitAnswer=result.type==='CLARIFY';

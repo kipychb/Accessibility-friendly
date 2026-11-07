@@ -55,11 +55,14 @@ class VoiceMessageHandler extends TPWebMessageHandler {
     switch (message['action']) {
       case 'startListening':
         // offline: true → 離線模式，一律用裝置上的 Whisper，不使用 Google 語音服務
-        await bridge.startListening(forceOffline: message['offline'] == true);
+        await bridge.startListening(
+          forceOffline: message['offline'] == true,
+          english: message['lang'] == 'en',
+        );
       case 'stopListening':
         await bridge.stopListening();
       case 'speak':
-        await bridge.speak(message['text']);
+        await bridge.speak(message['text'], english: message['lang'] == 'en');
       case 'stopSpeaking':
         await bridge.stopSpeaking();
       default:
@@ -131,7 +134,11 @@ class VoiceBridge {
   }
 
   /// 有網路且裝置有系統語音服務時用 Google（快、準）；否則用 Whisper 離線辨識。
-  Future<void> startListening({bool forceOffline = false}) async {
+  /// [english]：用英文辨識（Google en-US／Whisper en）；預設繁體中文。
+  bool _english = false;
+
+  Future<void> startListening({bool forceOffline = false, bool english = false}) async {
+    _english = english;
     if (_starting || _listening || _googleActive) return;
     _starting = true;
     try {
@@ -186,7 +193,7 @@ class VoiceBridge {
       listenOptions: SpeechListenOptions(
         listenFor: const Duration(seconds: 20),
         pauseFor: const Duration(seconds: 4),
-        localeId: 'zh-TW',
+        localeId: _english ? 'en-US' : 'zh-TW',
         partialResults: true,
         cancelOnError: true,
         // dictation：一般口述；search 模式會偏向地名（曾把「307」聽成「杉林溪」）
@@ -324,8 +331,9 @@ class VoiceBridge {
             .transcribe(
               model: model,
               audioPath: _audioPath!,
-              lang: 'zh',
-              initialPrompt: _initialPrompt,
+              lang: _english ? 'en' : 'zh',
+              // 英文不需要中文提示詞
+              initialPrompt: _english ? null : _initialPrompt,
               suppressNonSpeechTokens: true,
               keepModelLoaded: true, // 第二句起不用重新載入模型
             )
@@ -382,23 +390,24 @@ class VoiceBridge {
     _tts.setStartHandler(() => _emit('speakingStarted'));
     _tts.setCompletionHandler(() => _emit('speakingCompleted'));
     _tts.setErrorHandler((msg) => emitError('tts_failed', '朗讀失敗，請直接閱讀畫面文字'));
-    await _tts.setLanguage('zh-TW');
     await _tts.setSpeechRate(0.45);
     _ttsReady = true;
   }
 
-  Future<void> speak(Object? text) async {
+  Future<void> speak(Object? text, {bool english = false}) async {
     if (text is! String || text.trim().isEmpty || text.length > VoiceMessageHandler.maxSpeakLength) {
       emitError('invalid_text', '朗讀內容為空或過長');
       return;
     }
     await _cancelListening(); // 朗讀時取消收音，不再送出辨識結果
     await _ensureTts();
-    if (await _tts.isLanguageAvailable('zh-TW') != true) {
+    final lang = english ? 'en-US' : 'zh-TW';
+    if (await _tts.isLanguageAvailable(lang) != true) {
       emitError('tts_language_unavailable', '此裝置沒有中文朗讀語音，請直接閱讀畫面文字');
       return;
     }
     await _tts.stop();
+    await _tts.setLanguage(lang);
     await _tts.speak(text);
   }
 

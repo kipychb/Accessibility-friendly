@@ -198,8 +198,10 @@ class AssistantController {
             case -4 -> "NO_SERVICE";
             default -> seconds > 0 ? "ESTIMATED" : "NO_ESTIMATE";
         };
+        String destinationEn = stop.direction() == 0 ? route.destinationEn() : route.departureEn();
         return new Arrival(route.id(), route.name(), stop.id(), stop.name(), stop.direction(),
-                destination(route, stop), status, seconds != null && seconds >= 0 ? seconds : null);
+                destination(route, stop), status, seconds != null && seconds >= 0 ? seconds : null,
+                blankToNull(stop.nameEn()), blankToNull(destinationEn));
     }
 
     /** 站名與口語別名：原名、去括號、去「捷運」字首，以及兩者都去掉的版本。 */
@@ -295,7 +297,12 @@ class AssistantController {
     record Draft(String description, String location) {}
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Arrival(long routeId, String route, long stopId, String stop, int direction,
-                   String destination, String status, Integer estimateSeconds) {}
+                   String destination, String status, Integer estimateSeconds,
+                   String stopEn, String destinationEn) {}
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Reply(String type, String speech, ServiceEntry service, Instant updatedAt,
                  List<Arrival> arrivals, List<Choice> choices, Context context, Draft draft) {}
