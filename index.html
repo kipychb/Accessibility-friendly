@@ -134,6 +134,8 @@ button:not(:disabled):active, .service-card a:active {
 .source-line{font-size:15px;color:#6b858d;text-align:right;margin-top:6px}
 /* 設定頁「關於與技術揭露」 */
 .about{margin-top:26px;padding-top:16px;border-top:1px solid #e1ecee}.about h3{font-size:16px;margin:0 0 8px}.about ul{margin:0;padding-left:18px;font-size:16px;line-height:1.7;color:#4d6870}
+/* 示範模式提示：直接用瀏覽器開檔案、沒有連到後端時顯示 */
+.demo-banner{margin:0;padding:10px 16px;background:#fff4d6;color:#5c4300;border-bottom:1px solid #f0d58a;font-size:15px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -152,6 +154,8 @@ button:not(:disabled):active, .service-card a:active {
   </button>
   <button id="settingsBtn" class="round-icon" aria-label="設定"><svg width="23" height="23"><use href="#i-gear"/></svg></button>
 </header>
+<!-- 示範模式提示：沒有連到後端（例如直接用瀏覽器打開檔案）時顯示，避免誤以為完整功能故障 -->
+<p id="demoBanner" class="demo-banner hide" role="status"></p>
 <main id="main" class="main" aria-live="polite"></main>
 <!-- 對話頁底部：大麥克風與首頁、聆聽頁同一個位置；麥克風下方（首頁放「點一下說話」的高度）放文字輸入 -->
 <div id="compose" class="compose chat-dock hide"><button id="miniMic" class="mic-button" aria-label="語音輸入"><svg width="75" height="75"><use href="#i-mic"/></svg></button><div class="dock-below compose-row"><label class="sr-only" for="messageInput">輸入訊息</label><textarea id="messageInput" rows="1" maxlength="1500" placeholder="在這裡輸入問題，按右側送出鍵查詢"></textarea><button id="sendBtn" class="send" aria-label="傳送訊息"><svg width="22" height="22"><use href="#i-send"/></svg></button></div></div>
@@ -312,7 +316,10 @@ function top(){compose.classList.toggle('hide',state.screen!=='chat');
   // 回到首頁按鈕：首頁不顯示；文字跟著介面語言
   $('backHome').classList.toggle('hide',state.screen==='home');$('backHomeText').textContent=tr('回到首頁','Home');
   // 對話紀錄按鈕：首頁且已有對話時顯示，與「回到首頁」在同一個位置
-  $('toChat').classList.toggle('hide',!(state.screen==='home'&&state.conversation.length>0));$('toChatText').textContent=tr('對話紀錄','Chat history');}
+  $('toChat').classList.toggle('hide',!(state.screen==='home'&&state.conversation.length>0));$('toChatText').textContent=tr('對話紀錄','Chat history');
+  // 示範模式（沒有使用後端查詢）時顯示提示
+  $('demoBanner').classList.toggle('hide',!!state.useAPI);
+  $('demoBanner').textContent=tr('示範模式：未連接後端，只提供 5 項服務；完整功能請在台北通 App 中使用。','Demo mode: not connected to the backend, only 5 services available. Use the full version inside the TaipeiPASS app.');}
 // 回到語音助理首頁：先停止收音與朗讀，避免回首頁後還在聽或還在念
 function goHome(){cancelRecognition();stopSpeak();state.awaitAnswer=false;state.apiContext=null;state.screen='home';render();main.scrollTop=0;}
 // 介面語言跟著設定頁的「語音語言」：選 English 時整個介面改成英文（固定文字，開發階段撰寫，不是 AI 翻譯）

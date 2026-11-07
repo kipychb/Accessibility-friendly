@@ -43,6 +43,29 @@ mvn test
 node qa/run-natural.mjs
 ```
 
+## 如何測試
+
+本助手要在 **台北通（TownPass）App 裡**執行，並連到後端，才有完整功能。三種打開方式的差別：
+
+| 打開方式 | 查詢 | 聽不懂的說法 | 語音辨識 |
+|---|---|---|---|
+| **TownPass App 內**（模擬器或手機，見 HANDOFF.md） | 後端 51 項服務，中英文 | 裝置端 Gemma | Android 系統語音服務，或裝置端 Whisper |
+| **電腦瀏覽器＋後端**（下方指令） | 後端 51 項服務，中英文 | **沒有 Gemma** | **瀏覽器內建的語音辨識** |
+| 直接用瀏覽器打開 `index.html` 檔案 | 只有內建 5 項、只認中文關鍵字（畫面上方會顯示「示範模式」） | 沒有 | 瀏覽器內建 |
+
+用電腦瀏覽器測試時，**先啟動後端，再打開 <http://127.0.0.1:8080/>**，不要直接開檔案：
+
+```bash
+# 在 townpass-assistant 資料夾執行；static-locations 指向 repo 根目錄，提供 index.html 與相關檔案（只在本機 127.0.0.1）
+cd townpass-assistant
+mvn -B package
+java -jar target/assistant-1.0.0.jar --server.address=127.0.0.1 --spring.web.resources.static-locations=file:../
+```
+
+- 打字查詢最準確；語音要先在設定選好語言（選 English 才能用英文說），因為語音辨識的語言跟著設定，不會自動判斷。
+- 瀏覽器裡**沒有裝置端 Gemma 和 Whisper**（這兩個只在 TownPass App 內），規則比對不到的說法會回答範圍外並提供 1999。
+- 如果在瀏覽器裡關掉網路後仍辨識出文字，那是瀏覽器自己的語音辨識，與本專案的 Whisper 無關；要驗證離線請在 TownPass App 內測試。
+
 ## 資料來源
 
 - 服務內容依臺北市政府官方網站與臺北通官方說明（[id.taipei](https://id.taipei/tpcd/about/faq) 等）整理；每筆服務的機關（`authority`）、官方入口與來源網址記錄在 `services.json`，回答底部會標示「資料來源：機關名稱」。
