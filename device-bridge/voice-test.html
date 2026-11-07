@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>語音橋接測試</title>
+<style>
+  body { font-family: system-ui, "Noto Sans TC", sans-serif; margin: 0; padding: 16px; background: #fff; color: #111; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .note { color: #555; font-size: 14px; margin: 0 0 16px; }
+  #mic { display: block; width: 100%; height: 120px; font-size: 28px; border: 0; border-radius: 24px; background: #5a3fa0; color: #fff; }
+  #mic.listening { background: #c62828; }
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  .row button { flex: 1; height: 56px; font-size: 18px; border-radius: 12px; border: 1px solid #5a3fa0; background: #fff; color: #5a3fa0; }
+  .label { font-size: 14px; color: #555; margin: 20px 0 4px; }
+  #heard, #answer { font-size: 24px; min-height: 32px; }
+  #status { font-size: 18px; margin-top: 12px; color: #5a3fa0; }
+  #error { font-size: 18px; color: #c62828; min-height: 24px; }
+  #log { font: 12px/1.4 monospace; background: #f4f4f4; padding: 8px; height: 160px; overflow: auto; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>語音橋接測試</h1>
+<p class="note">固定測試答案，不查詢市政資料、不使用 LLM。</p>
+<button id="mic">🎤 開始說話</button>
+<div class="row">
+  <button id="stopListen">停止收音</button>
+  <button id="stopSpeak">停止朗讀</button>
+  <button id="replay">再唸一次</button>
+</div>
+<div id="status">準備中</div>
+<div id="error" role="alert"></div>
+<div class="label">辨識文字</div>
+<div id="heard">尚未辨識</div>
+<div class="label">回答字幕</div>
+<div id="answer" aria-live="polite">等待測試</div>
+<div class="label">事件紀錄</div>
+<div id="log"></div>
+<script src="townpass-voice.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const ANSWER = '您好，這是語音測試。';
+  // 由舊到新排列，最新一行在最下方
+  const log = (s) => { const el = $('log'); el.textContent += new Date().toLocaleTimeString() + ' ' + s + '\n'; el.scrollTop = el.scrollHeight; };
+  const V = window.TownPassVoice;
+
+  $('status').textContent = V.isAvailable() ? '已連接臺北通 App' : '不在臺北通 App 內（找不到 flutterObject）';
+
+  V.on('*', (ev, data) => log(ev + ' ' + JSON.stringify(data)));
+  V.on('listeningStarted', () => { $('mic').classList.add('listening'); $('mic').textContent = '🎤 聆聽中…'; $('status').textContent = '請說話'; });
+  V.on('listeningStopped', () => { $('mic').classList.remove('listening'); $('mic').textContent = '🎤 開始說話'; });
+  V.on('speechResult', ({ text, isFinal }) => {
+    $('heard').textContent = text || '…';
+    if (isFinal && text && text.trim()) {
+      // 先顯示完整字幕，再朗讀；朗讀失敗也不清除字幕
+      $('answer').textContent = ANSWER;
+      V.speak(ANSWER);
+    }
+  });
+  V.on('speechError', ({ code, message }) => { $('error').textContent = (message || '發生錯誤') + '（' + code + '）'; });
+  V.on('speakingStarted', () => { $('status').textContent = '朗讀中'; });
+  V.on('speakingCompleted', () => { $('status').textContent = '朗讀完成，可再按麥克風'; });
+  V.on('speakingStopped', () => { $('status').textContent = '已停止朗讀'; });
+
+  $('mic').onclick = () => { $('error').textContent = ''; $('heard').textContent = '…'; V.startListening(); };
+  $('stopListen').onclick = () => V.stopListening();
+  $('stopSpeak').onclick = () => V.stopSpeaking();
+  $('replay').onclick = () => { $('answer').textContent = ANSWER; V.speak(ANSWER); };
+</script>
+</body>
+</html>

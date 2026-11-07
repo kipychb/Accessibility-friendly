@@ -123,7 +123,10 @@ try {
   await waitFor("document.querySelector('textarea')?.value === '中山區民生東路三段，靠近公園的路口。'")
   await submit('民生東路三段1號')
   await waitFor("document.querySelector('.user-bubble p')?.textContent === '民生東路三段1號'")
-  await evaluate("document.querySelector('.tabs button:nth-child(2)').click()")
+  // 底部導覽已移除：從頂部「設定」進入「可查詢的服務」
+  await evaluate("document.querySelector('.app-bar .icon-button').click()")
+  await waitFor("document.querySelector('.settings-panel .secondary')?.textContent.includes('可查詢的服務')")
+  await evaluate("document.querySelector('.settings-panel .secondary').click()")
   await waitFor("document.querySelectorAll('.settings-panel a').length === 6")
   console.log('Browser smoke passed: five screens, round mic, simulated speech, draft editing, services')
 } finally {

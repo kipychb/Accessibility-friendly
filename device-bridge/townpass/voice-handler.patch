@@ -1,0 +1,580 @@
+From 8ef262dc605ee81db9eef4c0b14491137b10c23c Mon Sep 17 00:00:00 2001
+From: chenpoyu0109 <chenpoyu0109@gmail.com>
+Date: Sat, 7 Nov 2026 18:19:50 +0800
+Subject: [PATCH 1/2] Add voice web message handler for Chinese STT/TTS
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Adds a "voice" TPWebMessageHandler so micro-service pages in the WebView
+can use native Chinese speech recognition (speech_to_text) and
+text-to-speech (flutter_tts) via flutterObject, since Android WebView
+does not support the browser SpeechRecognition API.
+
+- Actions: startListening, stopListening, speak, stopSpeaking
+- Events: listeningStarted, listeningStopped, speechResult,
+  speechError, speakingStarted, speakingCompleted, speakingStopped
+- Sends the last non-empty partial as final when the Google service
+  ends with error_client and no final result
+- Adds RECORD_AUDIO/INTERNET permissions, speech service queries,
+  iOS usage descriptions, and a pinned "語音助理" service entry
+  (URL via --dart-define=VOICE_ASSISTANT_URL)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ android/app/src/debug/AndroidManifest.xml     |   2 +
+ android/app/src/main/AndroidManifest.xml      |   9 +
+ ios/Runner/Info.plist                         |   4 +
+ .../city_service/model/my_service_model.dart  |  13 ++
+ .../pinned_service_widget_controller.dart     |   1 +
+ .../tp_voice_message_handler.dart             | 218 ++++++++++++++++++
+ .../tp_web_message_listener.dart              |   2 +
+ pubspec.lock                                  |  32 +++
+ pubspec.yaml                                  |   2 +
+ 9 files changed, 283 insertions(+)
+ create mode 100644 lib/util/web_message_handler/tp_voice_message_handler.dart
+
+diff --git a/android/app/src/debug/AndroidManifest.xml b/android/app/src/debug/AndroidManifest.xml
+index 399f698..fecefd0 100644
+--- a/android/app/src/debug/AndroidManifest.xml
++++ b/android/app/src/debug/AndroidManifest.xml
+@@ -4,4 +4,6 @@
+          to allow setting breakpoints, to provide hot reload, etc.
+     -->
+     <uses-permission android:name="android.permission.INTERNET"/>
++    <!-- 僅限 debug：允許載入本機 http 測試頁（http://localhost:8000） -->
++    <application android:usesCleartextTraffic="true" />
+ </manifest>
+diff --git a/android/app/src/main/AndroidManifest.xml b/android/app/src/main/AndroidManifest.xml
+index 771d33a..3dd5f74 100644
+--- a/android/app/src/main/AndroidManifest.xml
++++ b/android/app/src/main/AndroidManifest.xml
+@@ -1,6 +1,8 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++    <uses-permission android:name="android.permission.INTERNET" />
+     <application
+         android:label="Town Pass"
+         android:name="${applicationName}"
+@@ -68,5 +70,12 @@
+         <intent>
+             <action android:name="android.support.customtabs.action.CustomTabsService" />
+         </intent>
++        <!-- speech_to_text / flutter_tts: 查詢系統語音辨識與朗讀服務 -->
++        <intent>
++            <action android:name="android.speech.RecognitionService" />
++        </intent>
++        <intent>
++            <action android:name="android.intent.action.TTS_SERVICE" />
++        </intent>
+     </queries>
+ </manifest>
+diff --git a/ios/Runner/Info.plist b/ios/Runner/Info.plist
+index 8a02575..d098b02 100644
+--- a/ios/Runner/Info.plist
++++ b/ios/Runner/Info.plist
+@@ -75,6 +75,10 @@
+ 			<key>LocationTemporaryUsageKey</key>
+ 			<string>TownPass 需要精確定位權限才可正常使用</string>
+ 		</dict>
++		<key>NSMicrophoneUsageDescription</key>
++		<string>語音助理需要使用麥克風聆聽您的問題</string>
++		<key>NSSpeechRecognitionUsageDescription</key>
++		<string>語音助理需要將您的語音轉換成文字</string>
+ 		<key>NSCameraUsageDescription</key>
+         <string>This app needs camera access to scan QR codes</string>
+         <key>NSPhotoLibraryUsageDescription</key>
+diff --git a/lib/page/city_service/model/my_service_model.dart b/lib/page/city_service/model/my_service_model.dart
+index 4f33a56..78050fa 100644
+--- a/lib/page/city_service/model/my_service_model.dart
++++ b/lib/page/city_service/model/my_service_model.dart
+@@ -8,6 +8,7 @@ import 'package:town_pass/gen/assets.gen.dart';
+ // Then add MyServiceItem within MyServiceIdExt extension.
+ 
+ enum MyServiceItemId {
++  voiceAssistant,
+   dedicatedLine,
+   districtOffice,
+   reportIssue,
+@@ -35,6 +36,18 @@ enum MyServiceItemId {
+ extension MyServiceIdExt on MyServiceItemId {
+   MyServiceItem get item {
+     return switch (this) {
++      // 語音市政服務助手：網址可用 --dart-define=VOICE_ASSISTANT_URL=... 覆寫。
++      MyServiceItemId.voiceAssistant => MyServiceItem(
++          title: '語音助理',
++          description: '用說的查詢市政服務',
++          icon: Assets.svg.iconTalk.svg(),
++          category: MyServiceCategory.cityService,
++          destinationUrl: const String.fromEnvironment(
++            'VOICE_ASSISTANT_URL',
++            defaultValue: 'http://localhost:8000/voice-test.html',
++          ),
++          forceWebViewTitle: '語音助理',
++        ),
+       MyServiceItemId.dedicatedLine => MyServiceItem(
+           title: '1999',
+           description: '播打網路語音通話',
+diff --git a/lib/page/city_service/widget/pinned_service_widget_controller.dart b/lib/page/city_service/widget/pinned_service_widget_controller.dart
+index 5593ac9..3917e9d 100644
+--- a/lib/page/city_service/widget/pinned_service_widget_controller.dart
++++ b/lib/page/city_service/widget/pinned_service_widget_controller.dart
+@@ -4,6 +4,7 @@ import 'package:town_pass/page/city_service/model/my_service_model.dart';
+ class PinnedServiceWidgetController extends GetxController {
+   final RxList<MyServiceItemId> _pinnedList = RxList(
+     [
++      MyServiceItemId.voiceAssistant,
+       MyServiceItemId.locationSearch,
+       MyServiceItemId.districtOffice,
+       MyServiceItemId.dashboard,
+diff --git a/lib/util/web_message_handler/tp_voice_message_handler.dart b/lib/util/web_message_handler/tp_voice_message_handler.dart
+new file mode 100644
+index 0000000..8f9d244
+--- /dev/null
++++ b/lib/util/web_message_handler/tp_voice_message_handler.dart
+@@ -0,0 +1,218 @@
++import 'package:flutter/foundation.dart';
++import 'package:flutter_inappwebview/flutter_inappwebview.dart';
++import 'package:flutter_tts/flutter_tts.dart';
++import 'package:speech_to_text/speech_recognition_error.dart';
++import 'package:speech_to_text/speech_to_text.dart';
++import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
++
++/// 語音橋接：讓微服務網頁透過 flutterObject 使用原生中文語音辨識（STT）與朗讀（TTS）。
++///
++/// 網頁 → App：`{"name":"voice","data":{"action":"startListening"}}`
++///   action：startListening | stopListening | speak（需帶 text）| stopSpeaking
++///
++/// App → 網頁：`{"name":"voice","data":{"event":"...", ...}}`
++///   event：listeningStarted | listeningStopped | speechResult(text,isFinal)
++///          | speechError(code,message) | speakingStarted | speakingCompleted | speakingStopped
++///
++/// 不使用 LLM。辨識由 Android 系統語音服務執行（一般模式可能連網）。
++class VoiceMessageHandler extends TPWebMessageHandler {
++  static const int maxSpeakLength = 1000;
++
++  @override
++  String get name => 'voice';
++
++  @override
++  Future<void> handle({
++    required Object? message,
++    required WebUri? sourceOrigin,
++    required bool isMainFrame,
++    required Function(WebMessage replyWebMessage)? onReply,
++  }) async {
++    final bridge = VoiceBridge.instance;
++    // 每次收到命令就更新回傳通道，事件一律送給最近一次發出命令的頁面。
++    bridge.emitter = (data) => onReply?.call(replyWebMessage(data: data));
++
++    if (!isMainFrame) {
++      bridge.emitError('not_main_frame', '只接受主頁面的語音命令');
++      return;
++    }
++    if (message is! Map) {
++      bridge.emitError('invalid_command', '語音命令格式錯誤');
++      return;
++    }
++
++    switch (message['action']) {
++      case 'startListening':
++        await bridge.startListening();
++      case 'stopListening':
++        await bridge.stopListening();
++      case 'speak':
++        await bridge.speak(message['text']);
++      case 'stopSpeaking':
++        await bridge.stopSpeaking();
++      default:
++        bridge.emitError('invalid_command', '不支援的語音命令');
++    }
++  }
++}
++
++class VoiceBridge {
++  VoiceBridge._();
++
++  static final VoiceBridge instance = VoiceBridge._();
++
++  void Function(Map<String, Object?> data)? emitter;
++
++  final SpeechToText _speech = SpeechToText();
++  final FlutterTts _tts = FlutterTts();
++  bool _speechReady = false;
++  bool _ttsReady = false;
++  bool _starting = false;
++  bool _listeningAnnounced = false;
++
++  void _emit(String event, [Map<String, Object?> extra = const {}]) {
++    debugPrint('VOICE_BRIDGE: $event $extra');
++    emitter?.call({'event': event, ...extra});
++  }
++
++  void emitError(String code, String message) => _emit('speechError', {'code': code, 'message': message});
++
++  Future<bool> _ensureSpeech() async {
++    if (_speechReady) return true;
++    // 只初始化一次；重複 initialize 會讓 Android 語音服務斷線（error_server_disconnected）。
++    _speechReady = await _speech.initialize(
++      onStatus: _onStatus,
++      onError: _onError,
++    );
++    return _speechReady;
++  }
++
++  void _onStatus(String status) {
++    if (status == 'listening' && !_listeningAnnounced) {
++      _listeningAnnounced = true;
++      _emit('listeningStarted');
++    } else if ((status == 'notListening' || status == 'done') && _listeningAnnounced) {
++      _listeningAnnounced = false;
++      _emit('listeningStopped');
++    }
++    if (status == 'done') _finalizeWithLastText();
++  }
++
++  void _onError(SpeechRecognitionError error) {
++    // 部分 Google 語音服務版本結束時只回 error_client／no_match，不送 final 結果。
++    // 若已聽到文字，就把最後一次的文字當作 final，避免整個流程卡住。
++    if (_finalizeWithLastText()) return;
++    emitError(error.errorMsg, _errorMessage(error.errorMsg));
++  }
++
++  // 本次收音的狀態
++  String _lastText = '';
++  bool _finalSent = true;
++
++  void _onResult(String text, bool isFinal) {
++    if (_finalSent) return;
++    final trimmed = text.trim();
++    if (trimmed.isEmpty && !isFinal) return; // 忽略空白的中間結果，避免字幕閃爍
++    if (trimmed.isNotEmpty) _lastText = trimmed;
++    if (isFinal) {
++      if (_lastText.isEmpty) return; // 交給 error / done 處理
++      _finalSent = true;
++      _emit('speechResult', {'text': _lastText, 'isFinal': true});
++    } else {
++      _emit('speechResult', {'text': trimmed, 'isFinal': false});
++    }
++  }
++
++  /// 若尚未送出 final 且有聽到文字，補送 final。回傳是否有補送。
++  bool _finalizeWithLastText() {
++    if (_finalSent || _lastText.isEmpty) return false;
++    _finalSent = true;
++    _emit('speechResult', {'text': _lastText, 'isFinal': true});
++    return true;
++  }
++
++  static String _errorMessage(String code) => switch (code) {
++        'error_speech_timeout' || 'error_no_match' => '沒有聽清楚，請再按一次麥克風說話',
++        'error_network' || 'error_network_timeout' || 'error_server' => '語音服務需要網路，請確認連線後再試',
++        'error_permission' || 'error_insufficient_permissions' => '尚未允許麥克風權限，請到設定開啟',
++        'error_busy' || 'error_server_disconnected' => '語音服務忙碌中，請稍後再試',
++        'error_language_not_supported' || 'error_language_unavailable' => '此裝置的語音服務不支援中文辨識',
++        _ => '語音辨識發生問題，請改用文字輸入',
++      };
++
++  Future<void> startListening() async {
++    if (_starting || _speech.isListening) return;
++    _starting = true;
++    try {
++      await _tts.stop();
++      if (!await _ensureSpeech()) {
++        final permitted = await _speech.hasPermission;
++        permitted
++            ? emitError('service_unavailable', '此裝置沒有可用的語音辨識服務，請改用文字輸入')
++            : emitError('permission_denied', '尚未允許麥克風權限，請到設定開啟');
++        return;
++      }
++      _lastText = '';
++      _finalSent = false;
++      await _speech.listen(
++        onResult: (result) => _onResult(result.recognizedWords, result.finalResult),
++        listenOptions: SpeechListenOptions(
++          listenFor: const Duration(seconds: 20),
++          pauseFor: const Duration(seconds: 4),
++          localeId: 'zh-TW',
++          partialResults: true,
++          cancelOnError: true,
++          // dictation：一般口述；search 模式會偏向地名／網搜詞（曾把「307」聽成「杉林溪」）
++          listenMode: ListenMode.dictation,
++        ),
++      );
++    } catch (e) {
++      emitError('start_failed', '語音辨識無法開始，請改用文字輸入');
++      debugPrint('VOICE_BRIDGE: start failed $e');
++    } finally {
++      _starting = false;
++    }
++  }
++
++  Future<void> stopListening() async {
++    if (_speech.isListening) await _speech.stop();
++  }
++
++  Future<void> _ensureTts() async {
++    if (_ttsReady) return;
++    _tts.setStartHandler(() => _emit('speakingStarted'));
++    _tts.setCompletionHandler(() => _emit('speakingCompleted'));
++    _tts.setErrorHandler((msg) => emitError('tts_failed', '朗讀失敗，請直接閱讀畫面文字'));
++    await _tts.setLanguage('zh-TW');
++    await _tts.setSpeechRate(0.45);
++    _ttsReady = true;
++  }
++
++  Future<void> speak(Object? text) async {
++    if (text is! String || text.trim().isEmpty || text.length > VoiceMessageHandler.maxSpeakLength) {
++      emitError('invalid_text', '朗讀內容為空或過長');
++      return;
++    }
++    _finalSent = true; // 朗讀時取消收音，不再補送辨識結果
++    if (_speech.isListening) await _speech.cancel();
++    await _ensureTts();
++    if (await _tts.isLanguageAvailable('zh-TW') != true) {
++      emitError('tts_language_unavailable', '此裝置沒有中文朗讀語音，請直接閱讀畫面文字');
++      return;
++    }
++    await _tts.stop();
++    await _tts.speak(text);
++  }
++
++  Future<void> stopSpeaking() async {
++    await _tts.stop();
++    _emit('speakingStopped');
++  }
++
++  /// 離開語音頁面時呼叫，避免背景繼續收音或朗讀。
++  Future<void> stopAll() async {
++    _finalSent = true;
++    if (_speech.isListening) await _speech.cancel();
++    await _tts.stop();
++  }
++}
+diff --git a/lib/util/web_message_handler/tp_web_message_listener.dart b/lib/util/web_message_handler/tp_web_message_listener.dart
+index 47cf6ee..07db600 100644
+--- a/lib/util/web_message_handler/tp_web_message_listener.dart
++++ b/lib/util/web_message_handler/tp_web_message_listener.dart
+@@ -1,5 +1,6 @@
+ import 'dart:convert';
+ 
++import 'package:town_pass/util/web_message_handler/tp_voice_message_handler.dart';
+ import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
+ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+ 
+@@ -16,6 +17,7 @@ abstract class TPWebMessageListener {
+         OpenLinkMessageHandler(),
+         NotifyMessageHandler(),
+         QRCodeScanMessageHandler(),
++        VoiceMessageHandler(),
+       ];
+ 
+   static List<TPWebMessageHandler> get messageHandler => _cachedMessageHandlers;
+diff --git a/pubspec.lock b/pubspec.lock
+index 9f11d60..0aefbaa 100644
+--- a/pubspec.lock
++++ b/pubspec.lock
+@@ -536,6 +536,14 @@ packages:
+     description: flutter
+     source: sdk
+     version: "0.0.0"
++  flutter_tts:
++    dependency: "direct main"
++    description:
++      name: flutter_tts
++      sha256: ce5eb209b40e95f2f4a1397116c87ab2fcdff32257d04ed7a764e75894c03775
++      url: "https://pub.dev"
++    source: hosted
++    version: "4.2.5"
+   flutter_web_plugins:
+     dependency: transitive
+     description: flutter
+@@ -1202,6 +1210,30 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "1.10.2"
++  speech_to_text:
++    dependency: "direct main"
++    description:
++      name: speech_to_text
++      sha256: f2fabd017b5cb07f4e06d496b2d4b957e39534bc848f92b1e6acac80a10f4967
++      url: "https://pub.dev"
++    source: hosted
++    version: "7.5.0"
++  speech_to_text_platform_interface:
++    dependency: transitive
++    description:
++      name: speech_to_text_platform_interface
++      sha256: "7e447356be3074c471223c9d179ef3f822475350b67ca923ec71ab3bf2ede214"
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.5.0"
++  speech_to_text_windows:
++    dependency: transitive
++    description:
++      name: speech_to_text_windows
++      sha256: "2d1d10565b23262386b453b33656299608dc7a66784453735d6c1318f13f44d7"
++      url: "https://pub.dev"
++    source: hosted
++    version: "1.0.1"
+   sqflite:
+     dependency: transitive
+     description:
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 69f3c45..81c78a1 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -56,6 +56,8 @@ dependencies:
+   # The following adds the Cupertino Icons font to your application.
+   # Use with the CupertinoIcons class for iOS style icons.
+   cupertino_icons: ^2.0.0
++  speech_to_text: 7.5.0
++  flutter_tts: 4.2.5
+ 
+ dev_dependencies:
+   build_runner: ^2.16.1
+-- 
+2.56.0.windows.2
+
+
+From f8ebeb1925c4d692fabada85c29c3d885f8b27f5 Mon Sep 17 00:00:00 2001
+From: chenpoyu0109 <chenpoyu0109@gmail.com>
+Date: Sat, 7 Nov 2026 18:30:45 +0800
+Subject: [PATCH 2/2] Stop voice when leaving the WebView or app goes to
+ background
+
+Wrap InAppWebView in VoiceLifecycleGuard, which calls
+VoiceBridge.stopAll() on dispose and when the app is paused/hidden,
+and drops the reply channel so no events reach a closed page.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ lib/util/tp_web_view.dart                     |  6 +-
+ .../tp_voice_message_handler.dart             | 58 +++++++++++++++----
+ 2 files changed, 51 insertions(+), 13 deletions(-)
+
+diff --git a/lib/util/tp_web_view.dart b/lib/util/tp_web_view.dart
+index 3ccbfa6..c188b97 100644
+--- a/lib/util/tp_web_view.dart
++++ b/lib/util/tp_web_view.dart
+@@ -8,6 +8,7 @@ import 'package:get/get.dart';
+ import 'package:town_pass/gen/assets.gen.dart';
+ import 'package:town_pass/util/tp_app_bar.dart';
+ import 'package:town_pass/util/tp_colors.dart';
++import 'package:town_pass/util/web_message_handler/tp_voice_message_handler.dart';
+ import 'package:town_pass/util/web_message_handler/tp_web_message_listener.dart';
+ 
+ class WebViewArgument {
+@@ -252,7 +253,9 @@ class TPInAppWebView extends StatelessWidget {
+ 
+   @override
+   Widget build(BuildContext context) {
+-    return InAppWebView(
++    // 離開網頁或 App 進入背景時，停止語音收音與朗讀
++    return VoiceLifecycleGuard(
++      child: InAppWebView(
+       onWebViewCreated: (controller) async {
+         await controller.addWebMessageListener(TPWebMessageListener.webMessageListener());
+         onWebViewCreated?.call(controller);
+@@ -326,6 +329,7 @@ class TPInAppWebView extends StatelessWidget {
+       shouldInterceptRequest: shouldInterceptRequest,
+       onCameraCaptureStateChanged: onCameraCaptureStateChanged,
+       onMicrophoneCaptureStateChanged: onMicrophoneCaptureStateChanged,
++    ),
+     );
+   }
+ }
+diff --git a/lib/util/web_message_handler/tp_voice_message_handler.dart b/lib/util/web_message_handler/tp_voice_message_handler.dart
+index 8f9d244..576b034 100644
+--- a/lib/util/web_message_handler/tp_voice_message_handler.dart
++++ b/lib/util/web_message_handler/tp_voice_message_handler.dart
+@@ -1,4 +1,4 @@
+-import 'package:flutter/foundation.dart';
++import 'package:flutter/widgets.dart';
+ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+ import 'package:flutter_tts/flutter_tts.dart';
+ import 'package:speech_to_text/speech_recognition_error.dart';
+@@ -80,10 +80,7 @@ class VoiceBridge {
+   Future<bool> _ensureSpeech() async {
+     if (_speechReady) return true;
+     // 只初始化一次；重複 initialize 會讓 Android 語音服務斷線（error_server_disconnected）。
+-    _speechReady = await _speech.initialize(
+-      onStatus: _onStatus,
+-      onError: _onError,
+-    );
++    _speechReady = await _speech.initialize(onStatus: _onStatus, onError: _onError);
+     return _speechReady;
+   }
+ 
+@@ -132,13 +129,13 @@ class VoiceBridge {
+   }
+ 
+   static String _errorMessage(String code) => switch (code) {
+-        'error_speech_timeout' || 'error_no_match' => '沒有聽清楚，請再按一次麥克風說話',
+-        'error_network' || 'error_network_timeout' || 'error_server' => '語音服務需要網路，請確認連線後再試',
+-        'error_permission' || 'error_insufficient_permissions' => '尚未允許麥克風權限，請到設定開啟',
+-        'error_busy' || 'error_server_disconnected' => '語音服務忙碌中，請稍後再試',
+-        'error_language_not_supported' || 'error_language_unavailable' => '此裝置的語音服務不支援中文辨識',
+-        _ => '語音辨識發生問題，請改用文字輸入',
+-      };
++    'error_speech_timeout' || 'error_no_match' => '沒有聽清楚，請再按一次麥克風說話',
++    'error_network' || 'error_network_timeout' || 'error_server' => '語音服務需要網路，請確認連線後再試',
++    'error_permission' || 'error_insufficient_permissions' => '尚未允許麥克風權限，請到設定開啟',
++    'error_busy' || 'error_server_disconnected' => '語音服務忙碌中，請稍後再試',
++    'error_language_not_supported' || 'error_language_unavailable' => '此裝置的語音服務不支援中文辨識',
++    _ => '語音辨識發生問題，請改用文字輸入',
++  };
+ 
+   Future<void> startListening() async {
+     if (_starting || _speech.isListening) return;
+@@ -211,8 +208,45 @@ class VoiceBridge {
+ 
+   /// 離開語音頁面時呼叫，避免背景繼續收音或朗讀。
+   Future<void> stopAll() async {
++    debugPrint('VOICE_BRIDGE: stopAll');
+     _finalSent = true;
+     if (_speech.isListening) await _speech.cancel();
+     await _tts.stop();
+   }
+ }
++
++/// 包住 WebView：頁面關閉（dispose）或 App 進入背景時停止收音與朗讀。
++class VoiceLifecycleGuard extends StatefulWidget {
++  const VoiceLifecycleGuard({super.key, required this.child});
++
++  final Widget child;
++
++  @override
++  State<VoiceLifecycleGuard> createState() => _VoiceLifecycleGuardState();
++}
++
++class _VoiceLifecycleGuardState extends State<VoiceLifecycleGuard> with WidgetsBindingObserver {
++  @override
++  void initState() {
++    super.initState();
++    WidgetsBinding.instance.addObserver(this);
++  }
++
++  @override
++  void didChangeAppLifecycleState(AppLifecycleState state) {
++    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
++      VoiceBridge.instance.stopAll();
++    }
++  }
++
++  @override
++  void dispose() {
++    WidgetsBinding.instance.removeObserver(this);
++    VoiceBridge.instance.stopAll();
++    VoiceBridge.instance.emitter = null;
++    super.dispose();
++  }
++
++  @override
++  Widget build(BuildContext context) => widget.child;
++}
+-- 
+2.56.0.windows.2
+
