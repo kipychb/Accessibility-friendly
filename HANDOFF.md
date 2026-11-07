@@ -34,7 +34,7 @@
    cd $env:TEMP\backend; C:\Users\ASUS\tools\apache-maven-3.9.11\bin\mvn.cmd -B package
    ```
 3. 準備前端資料夾（後端只提供這個資料夾，避免公開整個 repo）：
-   把 `index.html` 和 `townpass-assistant\voice-gemma-55\src\gemma-parser.js`
+   把 `index.html`、`service-en.json`（英文回答用，漏放會退回中文）和 `townpass-assistant\voice-gemma-55\src\gemma-parser.js`
    複製到 `$env:TEMP\frontend\`（後者放在 `townpass-assistant\voice-gemma-55\src\` 子路徑）
 4. 啟動後端並提供前端：
    ```powershell
@@ -63,7 +63,7 @@
 3. ~~中文系統性測試~~ ✅ `townpass-assistant/qa/natural-questions.json`（135 句）＋ `node qa/run-natural.mjs`：61/115 → 135/135（補約 80 個口語別名）。
    ⚠️ 新問法未見過時規則式約 55%，其餘靠 Gemma（預熱後）。新增別名後務必跑 `mvn test` 與 run-natural
 4. ~~裝置端辨識開關~~ ✅ 設定頁「語音辨識不使用 Google」→ `startListening {offline:true}` 一律用 Whisper；說話時暫停 Gemma 讓出 CPU。模擬器實測 ✅
-   - 待確認：敬老卡等服務在臺北通內實際提供什麼（清單依據 id.taipei/tpcd 未核實）
+   - ✅ 已核實卡證類（依 id.taipei/tpcd/about/tpcard）：敬老、愛心、愛心陪伴、兒童優惠在台北通是**虛擬卡（查看、出示卡面）**，申辦仍在區公所；回答已改為兩者都說明
 5. ~~英文回答~~ ✅（待實測）：英文問句或語言選 English → 英文回答＋英文 TTS。
    服務說明用 `service-en.json`（**開發階段預先翻譯，不是即時 AI**，展示時要這樣說明）；公車用官方英文站名（後端新增 stopEn／destinationEn）。
    限制：英文站名目前無法用來比對站牌（需說中文站名或選按鈕）

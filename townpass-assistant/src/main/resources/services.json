@@ -45,8 +45,8 @@
     "authority": "臺北市政府社會局",
     "officialUrl": "https://dosw.gov.taipei/cp.aspx?n=4683CD9EE2EB68B1&s=48A233DC72F7F0CE",
     "sourceUrl": "https://dosw.gov.taipei/cp.aspx?n=4683CD9EE2EB68B1&s=48A233DC72F7F0CE",
-    "scopeEvidenceUrl": "https://id.taipei/tpcd/",
-    "summary": "可至臺北市各區公所社會課洽辦敬老卡。請依社會局頁面確認資格、應備文件與代辦方式。",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/tpcard",
+    "summary": "申辦敬老卡請至臺北市各區公所社會課，資格、應備文件與代辦方式請看社會局頁面。台北通的卡證區可查看「敬老服務」虛擬卡並出示卡面，部分優惠仍須使用實體卡。",
     "category": "卡證",
     "aliases": [
       "敬老卡",
@@ -65,8 +65,8 @@
     "authority": "臺北市政府社會局",
     "officialUrl": "https://dosw.gov.taipei/cp.aspx?n=98EA840859DF5D7F",
     "sourceUrl": "https://dosw.gov.taipei/cp.aspx?n=98EA840859DF5D7F",
-    "scopeEvidenceUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
-    "summary": "設籍臺北市且領有身心障礙證明，可向區公所詢問愛心卡。愛心陪伴卡另有資格條件，請查閱社會局說明。",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/tpcard",
+    "summary": "設籍臺北市且領有身心障礙證明，可向區公所申辦愛心卡；愛心陪伴卡另有資格條件，請查閱社會局說明。台北通的卡證區可查看「愛心服務」及「愛心陪伴服務」虛擬卡，部分優惠仍須使用實體卡。",
     "category": "卡證",
     "aliases": [
       "愛心卡",
@@ -303,8 +303,8 @@
     "authority": "臺北市區公所",
     "officialUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
     "sourceUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
-    "scopeEvidenceUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
-    "summary": "可向區公所洽詢兒童優惠卡的申請條件、文件與補發方式。",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/tpcard",
+    "summary": "兒童優惠卡請向區公所洽詢申請條件、文件與補發方式。台北通的卡證區可查看「兒童優惠服務」虛擬卡，部分優惠仍須使用實體卡。",
     "category": "卡證",
     "aliases": [
       "兒童優惠卡",
