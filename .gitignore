@@ -3,7 +3,6 @@ node_modules/
 dist/
 
 # 後端（Maven）：用 mvn package 重新產生
-# 注意：townpass-assistant/target/ 目前仍被追蹤，是否移除請由後端負責人決定
 target/
 
 # Flutter／Android
@@ -22,3 +21,5 @@ Thumbs.db
 
 # 本機暫存
 PR_DESCRIPTION.md
+# Claude Code 工作樹
+.claude/worktrees/
