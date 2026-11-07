@@ -17,8 +17,10 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("/api/v1")
 class AssistantController {
+    // 路線後接「號」「路」「公車」皆可（例：307號、307路、307公車、紅30公車）。
+    // 原本只接受「號」「路公車」，口語常說的「307公車還有多久到」會抽不到路線。
     private static final Pattern ROUTE = Pattern.compile(
-            "((?:紅|藍|棕|橘|綠|小|市民小巴|內科通勤)?[0-9]{1,4}(?:區間車|區間|副線)?|[零〇一二兩三四五六七八九十百]{1,5})\\s*(?:號|路公車)");
+            "((?:紅|藍|棕|橘|綠|小|市民小巴|內科通勤)?[0-9]{1,4}(?:區間車|區間|副線)?|[零〇一二兩三四五六七八九十百]{1,5})\\s*(?:號|路|公車)");
     private static final Pattern CATALOG_SEPARATORS = Pattern.compile("[\\s\\p{P}]+");
     private final ServiceRepository catalog;
     private final BusFeed bus;
@@ -118,13 +120,26 @@ class AssistantController {
                 }
             }
             String stopQuery = stopText;
+            // 官方站名常帶「捷運」字首或括號說明（例：捷運公館站(羅斯福)），口語只說「公館站」，
+            // 所以也比對去掉這些部分的別名；以符合的別名長度優先，避免短站名誤中。
             String matchedName = routeStops.stream().map(BusFeed.Stop::name).map(AssistantController::normalize)
-                    .filter(stopQuery::contains).max(java.util.Comparator.comparingInt(String::length)).orElse(null);
+                    .distinct()
+                    .map(name -> java.util.Map.entry(name, stopAliases(name).stream()
+                            .filter(alias -> alias.length() >= 2 && stopQuery.contains(alias))
+                            .mapToInt(String::length).max().orElse(0)))
+                    .filter(entry -> entry.getValue() > 0)
+                    .max(java.util.Comparator.<java.util.Map.Entry<String, Integer>>comparingInt(java.util.Map.Entry::getValue)
+                            .thenComparingInt(entry -> -entry.getKey().length()))
+                    .map(java.util.Map.Entry::getKey).orElse(null);
             if (matchedName == null && sameRoute && context.stop() != null) {
                 matchedName = normalize(context.stop());
             }
             if (matchedName == null) {
-                return new Reply("CLARIFY", "請說出 " + routeName + " 公車的站牌名稱。",
+                // 舉出這條路線實際停靠的站名，讓使用者知道是站名不在路線上，而不是沒聽懂
+                List<String> examples = routeStops.stream().map(BusFeed.Stop::name).distinct()
+                        .filter(name -> name.startsWith("捷運")).limit(2).toList();
+                String hint = examples.isEmpty() ? "" : "，例如" + String.join("、", examples);
+                return new Reply("CLARIFY", "請說出 " + routeName + " 公車有停靠的站牌名稱" + hint + "。",
                         service, null, null, null, new Context(routeName, null, null, null, null), null);
             }
             String stopName = matchedName;
@@ -184,6 +199,13 @@ class AssistantController {
         };
         return new Arrival(route.id(), route.name(), stop.id(), stop.name(), stop.direction(),
                 destination(route, stop), status, seconds != null && seconds >= 0 ? seconds : null);
+    }
+
+    /** 站名與口語別名：原名、去括號、去「捷運」字首，以及兩者都去掉的版本。 */
+    static List<String> stopAliases(String name) {
+        String noParen = name.replaceAll("[(（][^)）]*[)）]", "");
+        String noMetro = noParen.startsWith("捷運") ? noParen.substring(2) : noParen;
+        return List.of(name, noParen, noMetro).stream().distinct().toList();
     }
 
     private static Integer direction(String text, List<BusFeed.Route> routes) {

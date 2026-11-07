@@ -98,6 +98,24 @@ class AssistantApiTest {
     }
 
     @Test
+    void extractsRouteFromCommonSpokenForms() throws Exception {
+        // 測試資料只有 1 號公車；這些口語說法都要抽出路線並補問站牌
+        for (String text : new String[] {"1公車還有多久到", "1路公車多久來", "1號公車幾點來", "1路還有多久到"}) {
+            mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"text\":\"" + text + "\"}"))
+                    .andExpect(jsonPath("$.context.route").value("1"))
+                    .andExpect(jsonPath("$.type").value("CLARIFY"));
+        }
+    }
+
+    @Test
+    void stopAliasesDropMetroPrefixAndParentheses() {
+        org.junit.jupiter.api.Assertions.assertEquals(
+                java.util.List.of("捷運公館站(羅斯福)", "捷運公館站", "公館站"),
+                AssistantController.stopAliases("捷運公館站(羅斯福)"));
+    }
+
+    @Test
     void asksForStopAndDisambiguatesDirection() throws Exception {
         mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"我想問１號公車幾點來\"}"))
