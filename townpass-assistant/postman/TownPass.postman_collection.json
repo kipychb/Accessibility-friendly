@@ -1,0 +1,235 @@
+{
+  "info": {
+    "name": "台北通無障礙語音助理",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "服務清單",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/services"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json).to.have.lengthOf(6); pm.expect(json.some(s => s.id === 'bus-arrivals' && s.mode === 'LIVE')).to.be.true; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "公車缺站牌",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/query",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\"一號公車幾點來\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json.type).to.eql('CLARIFY'); pm.expect(json.context.route).to.eql('1'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "公車即時到站",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/query",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\"一號公車華江站往松仁路幾點來\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json.type).to.eql('ANSWER'); pm.expect(json.updatedAt).to.be.a('string'); pm.expect(json.arrivals[0].stop).to.eql('華江站'); pm.expect(json.arrivals[0].route).to.eql('1'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "陳情草稿",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/query",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\"民生東路三段\",\"context\":{\"draft\":\"人行道破損，輪椅很難通過\"}}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json.type).to.eql('GUIDANCE'); pm.expect(json.draft.location).to.eql('民生東路三段'); pm.expect(json.service.id).to.eql('road-report'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "敬老卡官方指引",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/query",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\"我要申請敬老卡\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json.type).to.eql('GUIDANCE'); pm.expect(json.service.id).to.eql('senior-card'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "無障礙公廁官方指引",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/query",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\"附近有無障礙設施嗎\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json.type).to.eql('GUIDANCE'); pm.expect(json.service.id).to.eql('accessible-toilets'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "超出範圍",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/query",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\"明天天氣如何\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json.type).to.eql('OUT_OF_SCOPE'); pm.expect(json).not.to.have.property('service'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "空白輸入",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/query",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\" \"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
