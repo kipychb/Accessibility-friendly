@@ -1,7 +1,7 @@
 From 8ef262dc605ee81db9eef4c0b14491137b10c23c Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:19:50 +0800
-Subject: [PATCH 1/4] Add voice web message handler for Chinese STT/TTS
+Subject: [PATCH 1/5] Add voice web message handler for Chinese STT/TTS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -442,7 +442,7 @@ index 69f3c45..81c78a1 100644
 From f8ebeb1925c4d692fabada85c29c3d885f8b27f5 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:30:45 +0800
-Subject: [PATCH 2/4] Stop voice when leaving the WebView or app goes to
+Subject: [PATCH 2/5] Stop voice when leaving the WebView or app goes to
  background
 
 Wrap InAppWebView in VoiceLifecycleGuard, which calls
@@ -582,7 +582,7 @@ index 8f9d244..576b034 100644
 From c5eee2e4d3e2c5c1eaa9c362ba82809cae6edee0 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 21:26:58 +0800
-Subject: [PATCH 3/4] Hybrid speech recognition: Google online, Whisper offline
+Subject: [PATCH 3/5] Hybrid speech recognition: Google online, Whisper offline
 
 - online + system recognizer available: speech_to_text (Google), fast
 - offline or no Google service: record 16 kHz WAV, then transcribe on
@@ -1186,7 +1186,7 @@ index 81c78a1..0a77952 100644
 From 1ba66451cdc0e45f6e4d646f74ab55d14297eb9a Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 22:49:48 +0800
-Subject: [PATCH 4/4] Add on-device LLM handler (Gemma 4 E4B via llama.cpp)
+Subject: [PATCH 4/5] Add on-device LLM handler (Gemma 4 E4B via llama.cpp)
 
 New "llm" web message handler runs Gemma on the device with llamadart
 (llama.cpp, MIT); no network or cloud model is used.
@@ -1498,6 +1498,62 @@ index 0a77952..a95c0fc 100644
  
  dev_dependencies:
    build_runner: ^2.16.1
+-- 
+2.56.0.windows.2
+
+
+From b490ea27e471105c0422f4b90dc11e8ca1e68f4a Mon Sep 17 00:00:00 2001
+From: chenpoyu0109 <chenpoyu0109@gmail.com>
+Date: Sun, 8 Nov 2026 00:03:28 +0800
+Subject: [PATCH 5/5] Voice: allow forcing on-device Whisper (offline mode)
+
+startListening accepts offline: true to skip the Google recognizer even
+when online, so the app can show it works without Google.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../tp_voice_message_handler.dart                    | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/lib/util/web_message_handler/tp_voice_message_handler.dart b/lib/util/web_message_handler/tp_voice_message_handler.dart
+index cf210c5..3f14cd5 100644
+--- a/lib/util/web_message_handler/tp_voice_message_handler.dart
++++ b/lib/util/web_message_handler/tp_voice_message_handler.dart
+@@ -53,7 +53,8 @@ class VoiceMessageHandler extends TPWebMessageHandler {
+ 
+     switch (message['action']) {
+       case 'startListening':
+-        await bridge.startListening();
++        // offline: true → 離線模式，一律用裝置上的 Whisper，不使用 Google 語音服務
++        await bridge.startListening(forceOffline: message['offline'] == true);
+       case 'stopListening':
+         await bridge.stopListening();
+       case 'speak':
+@@ -129,7 +130,7 @@ class VoiceBridge {
+   }
+ 
+   /// 有網路且裝置有系統語音服務時用 Google（快、準）；否則用 Whisper 離線辨識。
+-  Future<void> startListening() async {
++  Future<void> startListening({bool forceOffline = false}) async {
+     if (_starting || _listening || _googleActive) return;
+     _starting = true;
+     try {
+@@ -138,10 +139,13 @@ class VoiceBridge {
+         emitError('permission_denied', '尚未允許麥克風權限，請到設定開啟');
+         return;
+       }
+-      if (await _isOnline() && await _ensureGoogle()) {
++      if (!forceOffline && await _isOnline() && await _ensureGoogle()) {
+         await _startGoogle();
+       } else {
+-        _emit('voiceStatus', {'message': '目前離線，使用裝置上的語音辨識，說完需稍候幾秒'});
++        _emit('voiceStatus', {
++          'message': forceOffline ? '離線模式：使用裝置上的語音辨識，說完需稍候幾秒' : '目前離線，使用裝置上的語音辨識，說完需稍候幾秒',
++          'engine': 'whisper',
++        });
+         await _startWhisper();
+       }
+     } catch (e) {
 -- 
 2.56.0.windows.2
 

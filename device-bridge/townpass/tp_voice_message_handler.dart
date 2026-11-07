@@ -53,7 +53,8 @@ class VoiceMessageHandler extends TPWebMessageHandler {
 
     switch (message['action']) {
       case 'startListening':
-        await bridge.startListening();
+        // offline: true → 離線模式，一律用裝置上的 Whisper，不使用 Google 語音服務
+        await bridge.startListening(forceOffline: message['offline'] == true);
       case 'stopListening':
         await bridge.stopListening();
       case 'speak':
@@ -129,7 +130,7 @@ class VoiceBridge {
   }
 
   /// 有網路且裝置有系統語音服務時用 Google（快、準）；否則用 Whisper 離線辨識。
-  Future<void> startListening() async {
+  Future<void> startListening({bool forceOffline = false}) async {
     if (_starting || _listening || _googleActive) return;
     _starting = true;
     try {
@@ -138,10 +139,13 @@ class VoiceBridge {
         emitError('permission_denied', '尚未允許麥克風權限，請到設定開啟');
         return;
       }
-      if (await _isOnline() && await _ensureGoogle()) {
+      if (!forceOffline && await _isOnline() && await _ensureGoogle()) {
         await _startGoogle();
       } else {
-        _emit('voiceStatus', {'message': '目前離線，使用裝置上的語音辨識，說完需稍候幾秒'});
+        _emit('voiceStatus', {
+          'message': forceOffline ? '離線模式：使用裝置上的語音辨識，說完需稍候幾秒' : '目前離線，使用裝置上的語音辨識，說完需稍候幾秒',
+          'engine': 'whisper',
+        });
         await _startWhisper();
       }
     } catch (e) {

@@ -62,7 +62,7 @@
 2. ~~服務範圍外提供 1999 一鍵撥號~~ ✅（`index.html` 用 TownPass 內建 `phone_call` Handler）→ 模擬器實測 ✅（打字 passport application → 1999 按鈕 → 撥號程式開啟）
 3. ~~中文系統性測試~~ ✅ `townpass-assistant/qa/natural-questions.json`（135 句）＋ `node qa/run-natural.mjs`：61/115 → 135/135（補約 80 個口語別名）。
    ⚠️ 新問法未見過時規則式約 55%，其餘靠 Gemma（預熱後）。新增別名後務必跑 `mvn test` 與 run-natural
-4. 離線模式開關（強制 Whisper），因無法向主辦方確認 Google 語音是否合規
+4. ~~離線模式開關~~ ✅ 設定頁「離線模式」→ `startListening {offline:true}` 一律用 Whisper（存在 localStorage）→ 待模擬器實測
 5. 英文問題用英文回答（Gemma 在裝置上翻譯後端答案、英文 TTS）
 6. 建 PR：`device/whisper-offline` → main
 7. 實體手機測試
