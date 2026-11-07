@@ -538,5 +538,17 @@
  {
   "id": "OUT_OF_SCOPE",
   "q": "今天股票漲了嗎"
+ },
+ {
+  "id": "counter-queue",
+  "q": "區公所叫號到幾號"
+ },
+ {
+  "id": "counter-queue",
+  "q": "區公所排隊到幾號了"
+ },
+ {
+  "id": "counter-queue",
+  "q": "戶政事務所叫號"
  }
 ]

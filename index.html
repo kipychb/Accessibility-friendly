@@ -198,7 +198,8 @@ const DEV=/[?&]dev=1(&|$)/.test(location.search);// ── 英文：問題是英
 // 公車用官方資料的英文站名；其餘固定句。
 let serviceEn=null;
 fetch(location.origin+'/service-en.json').then(r=>r.ok?r.json():null).then(j=>{serviceEn=j}).catch(()=>{});
-function isEnglishText(t){const latin=(t.match(/[A-Za-z]/g)||[]).length,cjk=(t.match(/[㐀-鿿]/g)||[]).length;return latin>=3&&latin>cjk*2;}
+// 有中文時比較英文「單字數」與中文字數，避免「附近YouBike」這類中文句被當成英文
+function isEnglishText(t){const latin=(t.match(/[A-Za-z]/g)||[]).length,words=(t.match(/[A-Za-z]+/g)||[]).length,cjk=(t.match(/[㐀-鿿]/g)||[]).length;return cjk===0?latin>=3:(words>=2&&words>cjk);}
 function englishAnswer(r){
   const a=r.arrivals&&r.arrivals[0];
   if(a){const st={DUE:'arriving now',NOT_DEPARTED:'not departed yet',SKIPPED:'not stopping at this stop',LAST_PASSED:'the last bus has passed',NO_SERVICE:'no service today',NO_ESTIMATE:'no official estimate available'}[a.status];
@@ -542,7 +543,7 @@ function settings(){main.innerHTML=`<div class="settings"><h2>${tr('語音助理
   // 後端網址與開關只在 ?dev=1 時顯示，平常不更動
   if(DEV){let url=$('apiUrl').value.trim();if(url&&!/^https?:\/\//i.test(url)){toast(tr('請輸入完整的 http 或 https 網址','Please enter a full http or https URL'));return}state.apiUrl=url;state.useAPI=$('useAPI').checked;}  state.autoSpeak=$('autoSpeak').checked;state.offlineVoice=$('offlineVoice').checked;try{localStorage.setItem('offlineVoice',state.offlineVoice?'1':'0')}catch(e){}state.language=$('lang').value;state.screen='home';render();toast(tr('設定已儲存（本次開啟期間）','Settings saved (until you close this page)'))}}
 
-$('settingsBtn').onclick=()=>{cancelRecognition();state.screen='settings';render()};$('backHome').onclick=goHome;$('sendBtn').onclick=()=>send(input.value);$('miniMic').onclick=startListening;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send(input.value)}});render();
+$('settingsBtn').onclick=()=>{cancelRecognition();state.screen='settings';render();main.scrollTop=0/* 開啟設定時捲回頂端，避免停在對話頁的捲動位置 */};$('backHome').onclick=goHome;$('sendBtn').onclick=()=>send(input.value);$('miniMic').onclick=startListening;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send(input.value)}});render();
 })();
 </script>
 </body></html>
