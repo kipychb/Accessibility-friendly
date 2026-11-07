@@ -15,6 +15,38 @@ main（commit `c8e5d4d`）的修改；`tp_voice_message_handler.dart` 是其中�
 - 朗讀：`flutter_tts`（Android 系統 TTS），離線可用。
 - 本 Handler 不使用 LLM。
 
+## 裝置端 LLM（Gemma 4 E4B）
+
+| 項目 | 內容 |
+|---|---|
+| 模型 | `google/gemma-4-E4B-it-qat-q4_0-gguf`，檔案 `gemma-4-E4B_q4_0-it.gguf`（5,154,941,280 bytes，SHA-256 `676c3507…53fbaee`） |
+| 授權 | Apache-2.0（Google，非大陸廠牌） |
+| 量化 | QAT q4_0（GGUF） |
+| 推論框架 | llama.cpp，經 `llamadart` 0.18.0（MIT），CPU |
+| 用途 | **只做意圖分類**：輸出 `{intent, routes, stop, location}`，答案一律來自後端官方資料 |
+| 網路 | 完全離線，不呼叫任何雲端模型 |
+
+流程（`index.html`）：先用原句查後端（規則式，約 1 秒）；後端回 `OUT_OF_SCOPE` 時才交給 Gemma，
+以 Jassline 的 `gemma-parser.js` 提示詞（去除別名以縮短）＋ GBNF 文法限制輸出，
+`normalizeResult` 檢查後轉成後端認得的說法再查一次。Gemma 失敗或逾時就用原本結果。
+
+模擬器實測（x86_64、8 GB、CPU）：載入約 15–45 秒；第一次（預熱，計算系統提示）約 135 秒，
+頁面開啟時自動在背景執行；之後每句約 **10 秒**。
+例：「Where can I apply for a senior card」→ `senior-card` → 敬老卡官方說明 ✅
+
+### 放入模型
+
+```bash
+curl -L -o gemma-4-E4B_q4_0-it.gguf https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf/resolve/main/gemma-4-E4B_q4_0-it.gguf
+```
+
+```bash
+adb exec-in "run-as com.example.townpass sh -c 'cat > files/gemma-4-E4B_q4_0-it.gguf'" < gemma-4-E4B_q4_0-it.gguf
+```
+
+（在 Git Bash 執行；需先開過一次 App。Whisper 模型 `ggml-base.bin` 也可用同樣方式放入。
+模擬器需 RAM 8 GB 以上、data 分割區 24 GB。）
+
 ## 套用
 
 ```bash
@@ -56,7 +88,8 @@ adb shell run-as com.example.townpass cp /sdcard/Download/ggml-base.bin files/gg
 | 檔案 | 內容 |
 |---|---|
 | `lib/util/web_message_handler/tp_voice_message_handler.dart` | `voice` Handler：混合 STT、TTS、離開頁面停止 |
-| `lib/util/web_message_handler/tp_web_message_listener.dart` | 註冊 `VoiceMessageHandler` |
+| `lib/util/web_message_handler/tp_llm_message_handler.dart` | `llm` Handler：裝置端 Gemma 推論（llamadart） |
+| `lib/util/web_message_handler/tp_web_message_listener.dart` | 註冊 `VoiceMessageHandler`、`LlmMessageHandler` |
 | `lib/util/tp_web_view.dart` | `VoiceLifecycleGuard`：關閉頁面／進背景時停止收音與朗讀 |
 | `lib/page/city_service/model/my_service_model.dart` | 新增「語音助理」服務入口 |
 | `lib/page/city_service/widget/pinned_service_widget_controller.dart` | 釘選到「我的服務」第一格 |
@@ -74,6 +107,8 @@ adb shell run-as com.example.townpass cp /sdcard/Download/ggml-base.bin files/gg
 | whisper_ggml / whisper.cpp | MIT |
 | Whisper 模型（OpenAI） | MIT |
 | record | BSD-3-Clause |
+| llamadart / llama.cpp | MIT |
+| Gemma 4 E4B（Google） | Apache-2.0 |
 | ffmpeg_kit_flutter_new_min（whisper_ggml 相依） | LGPL-3.0 |
 | Android 系統語音服務（Google） | 閉源系統服務、免費；是否符合競賽規範待主辦方確認 |
 

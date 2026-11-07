@@ -1,7 +1,7 @@
 From 8ef262dc605ee81db9eef4c0b14491137b10c23c Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:19:50 +0800
-Subject: [PATCH 1/3] Add voice web message handler for Chinese STT/TTS
+Subject: [PATCH 1/4] Add voice web message handler for Chinese STT/TTS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -442,7 +442,7 @@ index 69f3c45..81c78a1 100644
 From f8ebeb1925c4d692fabada85c29c3d885f8b27f5 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:30:45 +0800
-Subject: [PATCH 2/3] Stop voice when leaving the WebView or app goes to
+Subject: [PATCH 2/4] Stop voice when leaving the WebView or app goes to
  background
 
 Wrap InAppWebView in VoiceLifecycleGuard, which calls
@@ -582,7 +582,7 @@ index 8f9d244..576b034 100644
 From c5eee2e4d3e2c5c1eaa9c362ba82809cae6edee0 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 21:26:58 +0800
-Subject: [PATCH 3/3] Hybrid speech recognition: Google online, Whisper offline
+Subject: [PATCH 3/4] Hybrid speech recognition: Google online, Whisper offline
 
 - online + system recognizer available: speech_to_text (Google), fast
 - offline or no Google service: record 16 kHz WAV, then transcribe on
@@ -1176,6 +1176,325 @@ index 81c78a1..0a77952 100644
 +  whisper_ggml: 2.9.0
 +  record: 7.1.2
 +  speech_to_text: 7.5.0
+ 
+ dev_dependencies:
+   build_runner: ^2.16.1
+-- 
+2.56.0.windows.2
+
+
+From 1ba66451cdc0e45f6e4d646f74ab55d14297eb9a Mon Sep 17 00:00:00 2001
+From: chenpoyu0109 <chenpoyu0109@gmail.com>
+Date: Sat, 7 Nov 2026 22:49:48 +0800
+Subject: [PATCH 4/4] Add on-device LLM handler (Gemma 4 E4B via llama.cpp)
+
+New "llm" web message handler runs Gemma on the device with llamadart
+(llama.cpp, MIT); no network or cloud model is used.
+
+- actions: status, load, generate(id, system, prompt, maxTokens,
+  timeoutMs, grammar); events: status, loaded, result, error
+- model: google/gemma-4-E4B-it-qat-q4_0-gguf (Apache-2.0) in app files
+- 6144 context for the 55-service system prompt; identical prompt
+  prefixes are reused, so only the first (warm-up) call is slow
+- thinking disabled; optional GBNF grammar forces the parser's JSON
+- one request at a time; timeout cancels the running generation
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../tp_llm_message_handler.dart               | 183 ++++++++++++++++++
+ .../tp_web_message_listener.dart              |   2 +
+ pubspec.lock                                  |  26 ++-
+ pubspec.yaml                                  |   2 +
+ 4 files changed, 208 insertions(+), 5 deletions(-)
+ create mode 100644 lib/util/web_message_handler/tp_llm_message_handler.dart
+
+diff --git a/lib/util/web_message_handler/tp_llm_message_handler.dart b/lib/util/web_message_handler/tp_llm_message_handler.dart
+new file mode 100644
+index 0000000..3895739
+--- /dev/null
++++ b/lib/util/web_message_handler/tp_llm_message_handler.dart
+@@ -0,0 +1,183 @@
++import 'dart:async';
++import 'dart:io';
++
++import 'package:flutter/foundation.dart';
++import 'package:flutter_inappwebview/flutter_inappwebview.dart';
++import 'package:llamadart/llamadart.dart';
++import 'package:path_provider/path_provider.dart';
++import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
++
++/// 裝置端 LLM 橋接：讓微服務網頁在手機上執行 Gemma（不連網、不呼叫雲端模型）。
++///
++/// 網頁 → App：`{"name":"llm","data":{"action":"...", ...}}`
++///   action：status | load | generate（需帶 id、system、prompt，可帶 maxTokens）
++///
++/// App → 網頁：`{"name":"llm","data":{"event":"...", ...}}`
++///   event：status(ready,loaded,model) | loaded(ms) | result(id,text,ms) | error(id,code,message)
++///
++/// 模型：google/gemma-4-E4B-it-qat-q4_0-gguf（Apache-2.0），GGUF q4_0
++/// 推論框架：llama.cpp，經 llamadart 套件（MIT），在 CPU 上執行。
++/// 模型檔需事先放到 App 的 files 目錄（見 device-bridge/townpass/README.md）。
++/// 這裡只負責推論；提示詞與輸出檢查由網頁端的 gemma-parser.js 處理。
++class LlmMessageHandler extends TPWebMessageHandler {
++  @override
++  String get name => 'llm';
++
++  @override
++  Future<void> handle({
++    required Object? message,
++    required WebUri? sourceOrigin,
++    required bool isMainFrame,
++    required Function(WebMessage replyWebMessage)? onReply,
++  }) async {
++    final bridge = LlmBridge.instance;
++    bridge.emitter = (data) => onReply?.call(replyWebMessage(data: data));
++    if (!isMainFrame || message is! Map) {
++      bridge.emitError(null, 'invalid_command', 'LLM 命令格式錯誤');
++      return;
++    }
++    switch (message['action']) {
++      case 'status':
++        await bridge.status();
++      case 'load':
++        await bridge.load();
++      case 'generate':
++        await bridge.generate(
++          id: message['id'],
++          system: message['system'],
++          prompt: message['prompt'],
++          maxTokens: message['maxTokens'],
++          timeoutMs: message['timeoutMs'],
++          grammar: message['grammar'],
++        );
++      default:
++        bridge.emitError(null, 'invalid_command', '不支援的 LLM 命令');
++    }
++  }
++}
++
++class LlmBridge {
++  LlmBridge._();
++
++  static final LlmBridge instance = LlmBridge._();
++
++  static const String modelFileName = 'gemma-4-E4B_q4_0-it.gguf';
++  static const int maxPromptLength = 12000;
++
++  void Function(Map<String, Object?> data)? emitter;
++
++  LlamaEngine? _engine;
++  Future<LlamaEngine?>? _loading;
++  Future<void> _queue = Future.value(); // 一次只跑一個推論
++
++  void _emit(String event, [Map<String, Object?> extra = const {}]) {
++    debugPrint('LLM_BRIDGE: $event ${extra.map((k, v) => MapEntry(k, v is String && v.length > 120 ? '${v.substring(0, 120)}…' : v))}');
++    emitter?.call({'event': event, ...extra});
++  }
++
++  void emitError(Object? id, String code, String message) => _emit('error', {'id': id, 'code': code, 'message': message});
++
++  Future<String> _modelPath() async => '${(await getApplicationSupportDirectory()).path}/$modelFileName';
++
++  Future<void> status() async {
++    final path = await _modelPath();
++    _emit('status', {'ready': File(path).existsSync(), 'loaded': _engine != null, 'model': modelFileName});
++  }
++
++  /// 載入模型（第一次約需數十秒）；重複呼叫會共用同一次載入。
++  Future<LlamaEngine?> load() {
++    if (_engine != null) return Future.value(_engine);
++    return _loading ??= _doLoad().whenComplete(() => _loading = null);
++  }
++
++  Future<LlamaEngine?> _doLoad() async {
++    final path = await _modelPath();
++    if (!File(path).existsSync()) {
++      emitError(null, 'model_missing', '手機上尚未安裝 Gemma 模型，已改用一般查詢');
++      return null;
++    }
++    final started = DateTime.now();
++    try {
++      _engine = await LlamaEngine.load(
++        LlamaModel(ModelSource.path(path)),
++        // 系統提示含 55 項服務與別名（約 3,300 字），需較大上下文；
++        // 相同的提示前綴會被重複使用，只有第一次需要完整計算。
++        params: const ModelParams(contextSize: 6144, device: ComputeDevice.cpu),
++      );
++      _emit('loaded', {'ms': DateTime.now().difference(started).inMilliseconds});
++      return _engine;
++    } catch (e) {
++      debugPrint('LLM_BRIDGE: load failed $e');
++      emitError(null, 'load_failed', 'Gemma 模型載入失敗，已改用一般查詢');
++      return null;
++    }
++  }
++
++  Future<void> generate({
++    Object? id,
++    Object? system,
++    Object? prompt,
++    Object? maxTokens,
++    Object? timeoutMs,
++    Object? grammar,
++  }) {
++    // 預熱（第一次計算系統提示）可能要數分鐘，允許網頁指定較長的逾時，上限 10 分鐘
++    final timeout = Duration(milliseconds: timeoutMs is int ? timeoutMs.clamp(5000, 600000) : 40000);
++    // GBNF 文法：限制 Gemma 只能輸出指定格式的 JSON（服務 ID 只能從清單中選）
++    final gbnf = grammar is String && grammar.length < 20000 ? grammar : null;
++    final run = _queue.then((_) => _generate(id, system, prompt, maxTokens, timeout, gbnf));
++    _queue = run.catchError((_) {});
++    return run;
++  }
++
++  Future<void> _generate(
++    Object? id,
++    Object? system,
++    Object? prompt,
++    Object? maxTokens,
++    Duration timeout,
++    String? grammar,
++  ) async {
++    if (prompt is! String || prompt.trim().isEmpty || prompt.length > maxPromptLength) {
++      emitError(id, 'invalid_prompt', '查詢內容為空或過長');
++      return;
++    }
++    final engine = await load();
++    if (engine == null) return;
++    final started = DateTime.now();
++    try {
++      final completion = await engine
++          .create(
++            [
++              if (system is String && system.trim().isNotEmpty)
++                LlamaChatMessage.fromText(role: LlamaChatRole.system, text: system),
++              LlamaChatMessage.fromText(role: LlamaChatRole.user, text: prompt),
++            ],
++            params: GenerationParams(
++              maxTokens: maxTokens is int ? maxTokens.clamp(16, 512) : 128,
++              temp: 0, // 分類任務：固定輸出，不要隨機
++              // 關閉 Gemma 4 的思考段落：省時間，也避免 token 額度在思考時用完、正文變空白
++              thinkingBudget: const ThinkingBudget(maxTokens: 0),
++              grammar: grammar,
++            ),
++          )
++          .collect()
++          .timeout(timeout);
++      var text = completion.text.trim();
++      // 保險：若正文仍為空，從思考內容中取出 JSON 物件
++      if (text.isEmpty) {
++        final match = RegExp(r'\{[^{}]*\}').allMatches(completion.thinking).lastOrNull;
++        text = match?.group(0) ?? '';
++      }
++      debugPrint('LLM_BRIDGE: finish=${completion.finishReason} thinkingChars=${completion.thinking.length}');
++      _emit('result', {'id': id, 'text': text, 'ms': DateTime.now().difference(started).inMilliseconds});
++    } on TimeoutException {
++      // timeout 不會自動停止 llama.cpp，要明確取消，否則下一次推論會因「仍在執行」而失敗
++      engine.cancelGeneration();
++      emitError(id, 'timeout', 'Gemma 回應逾時，已改用一般查詢');
++    } catch (e) {
++      debugPrint('LLM_BRIDGE: generate failed $e');
++      emitError(id, 'generate_failed', 'Gemma 推論失敗，已改用一般查詢');
++    }
++  }
++}
+diff --git a/lib/util/web_message_handler/tp_web_message_listener.dart b/lib/util/web_message_handler/tp_web_message_listener.dart
+index 07db600..70bcd41 100644
+--- a/lib/util/web_message_handler/tp_web_message_listener.dart
++++ b/lib/util/web_message_handler/tp_web_message_listener.dart
+@@ -1,5 +1,6 @@
+ import 'dart:convert';
+ 
++import 'package:town_pass/util/web_message_handler/tp_llm_message_handler.dart';
+ import 'package:town_pass/util/web_message_handler/tp_voice_message_handler.dart';
+ import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
+ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+@@ -18,6 +19,7 @@ abstract class TPWebMessageListener {
+         NotifyMessageHandler(),
+         QRCodeScanMessageHandler(),
+         VoiceMessageHandler(),
++        LlmMessageHandler(),
+       ];
+ 
+   static List<TPWebMessageHandler> get messageHandler => _cachedMessageHandlers;
+diff --git a/pubspec.lock b/pubspec.lock
+index e104960..abbb61a 100644
+--- a/pubspec.lock
++++ b/pubspec.lock
+@@ -29,10 +29,10 @@ packages:
+     dependency: transitive
+     description:
+       name: archive
+-      sha256: "6c5bcd986e06b94e3c40244af471750840a3d2341d1f9763a1100a14add517b4"
++      sha256: de5ac590b8155e4e676088d714bd41ea620449a6adc0f7950c5073874b287ddb
+       url: "https://pub.dev"
+     source: hosted
+-    version: "4.3.0"
++    version: "4.6.0"
+   args:
+     dependency: transitive
+     description:
+@@ -273,6 +273,14 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "8.1.0"
++  dinja:
++    dependency: transitive
++    description:
++      name: dinja
++      sha256: a3addbe07ebb562c062256f7c644ac498ab2ab3d97a85d9f95aafac7f53fa808
++      url: "https://pub.dev"
++    source: hosted
++    version: "1.3.2"
+   dotted_border:
+     dependency: "direct main"
+     description:
+@@ -729,10 +737,10 @@ packages:
+     dependency: transitive
+     description:
+       name: image
+-      sha256: a1e7f4951e538a568e14b856702afc9ae1d2f4b202daced8d22c1b9cd211ce89
++      sha256: "89ed75b2f8231fe676808c5564f9590d728024ded7ac782a7ed8474f1c95b72a"
+       url: "https://pub.dev"
+     source: hosted
+-    version: "4.10.1"
++    version: "4.12.0"
+   image_picker:
+     dependency: "direct main"
+     description:
+@@ -893,6 +901,14 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "6.1.0"
++  llamadart:
++    dependency: "direct main"
++    description:
++      name: llamadart
++      sha256: "41565587a0915f0f80d02682d5a4d04bead4fde8ff6ec4f8fe3a11a63060678b"
++      url: "https://pub.dev"
++    source: hosted
++    version: "0.18.0"
+   logging:
+     dependency: transitive
+     description:
+@@ -1006,7 +1022,7 @@ packages:
+     source: hosted
+     version: "1.1.0"
+   path_provider:
+-    dependency: transitive
++    dependency: "direct main"
+     description:
+       name: path_provider
+       sha256: a7f4874f987173da295a61c181b8ee71dab59b332a486b391babf26a1b884825
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 0a77952..a95c0fc 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -60,6 +60,8 @@ dependencies:
+   whisper_ggml: 2.9.0
+   record: 7.1.2
+   speech_to_text: 7.5.0
++  llamadart: 0.18.0
++  path_provider: ^2.1.6
  
  dev_dependencies:
    build_runner: ^2.16.1

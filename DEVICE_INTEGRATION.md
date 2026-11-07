@@ -31,7 +31,10 @@
 - 模擬器 x86_64 需套 `device-bridge/townpass/patch-whisper-x86.ps1`（AVX2）；ARM 手機不需要
 - 模擬器 AVD 已調為 RAM 8 GB（備份 `config.ini.bak-20261107`）；儲存仍 10 GB（需 wipe data 才擴充）
 - 待主辦方確認：有網路時使用 Google 語音服務是否符合規範
-- LLM：團隊選定 Gemma 4 E4B（Apache 2.0，q4_0 GGUF 約 4.9 GB），尚未整合；模擬器需先擴充儲存
+- LLM：Gemma 4 E4B（Apache 2.0，q4_0 GGUF）已在模擬器 TownPass 內離線執行 ✅
+  規則優先、聽不懂才問 Gemma；預熱約 135 秒，之後每句約 10 秒；GBNF 文法保證 JSON
+  英文「Where can I apply for a senior card」→ senior-card → 正確答案 ✅（答案仍為中文）
+- 模擬器已 wipe data，RAM 8 GB／data 24 GB
 
 ## 架構
 - 部署：微服務網頁在 TownPass WebView；語音由 TownPass 自訂 Handler（name: `voice`）提供。
