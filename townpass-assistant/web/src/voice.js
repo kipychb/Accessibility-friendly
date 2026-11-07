@@ -30,6 +30,8 @@ if (bridge) {
         if (msg.data.code?.startsWith('tts') || msg.data.code === 'invalid_text') speakHandlers.onError?.(message)
         else handlers.onError?.(message)
         break
+      // 例如第一次下載離線語音模型時的進度提示
+      case 'voiceStatus': handlers.onStatus?.(message); break
       case 'speakingCompleted':
       case 'speakingStopped': speakHandlers.onEnd?.(); break
     }

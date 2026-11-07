@@ -1,7 +1,7 @@
 From 8ef262dc605ee81db9eef4c0b14491137b10c23c Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:19:50 +0800
-Subject: [PATCH 1/2] Add voice web message handler for Chinese STT/TTS
+Subject: [PATCH 1/3] Add voice web message handler for Chinese STT/TTS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -442,7 +442,7 @@ index 69f3c45..81c78a1 100644
 From f8ebeb1925c4d692fabada85c29c3d885f8b27f5 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:30:45 +0800
-Subject: [PATCH 2/2] Stop voice when leaving the WebView or app goes to
+Subject: [PATCH 2/3] Stop voice when leaving the WebView or app goes to
  background
 
 Wrap InAppWebView in VoiceLifecycleGuard, which calls
@@ -575,6 +575,610 @@ index 8f9d244..576b034 100644
 +  @override
 +  Widget build(BuildContext context) => widget.child;
 +}
+-- 
+2.56.0.windows.2
+
+
+From c5eee2e4d3e2c5c1eaa9c362ba82809cae6edee0 Mon Sep 17 00:00:00 2001
+From: chenpoyu0109 <chenpoyu0109@gmail.com>
+Date: Sat, 7 Nov 2026 21:26:58 +0800
+Subject: [PATCH 3/3] Hybrid speech recognition: Google online, Whisper offline
+
+- online + system recognizer available: speech_to_text (Google), fast
+- offline or no Google service: record 16 kHz WAV, then transcribe on
+  device with Whisper base via whisper_ggml (whisper.cpp, MIT)
+- model downloads once (ggml-base, ~148 MB), then works offline
+- adaptive end-of-speech detection (rising noise floor + peak drop,
+  1.2 s quiet), 10 s cap; skip Whisper on silence to avoid hallucination
+- filter prompt echoes / subtitle-style hallucinations
+- voiceStatus event for "offline / transcribing / downloading" hints
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../tp_voice_message_handler.dart             | 345 ++++++++++++++----
+ pubspec.lock                                  |  96 +++++
+ pubspec.yaml                                  |   4 +-
+ 3 files changed, 368 insertions(+), 77 deletions(-)
+
+diff --git a/lib/util/web_message_handler/tp_voice_message_handler.dart b/lib/util/web_message_handler/tp_voice_message_handler.dart
+index 576b034..cf210c5 100644
+--- a/lib/util/web_message_handler/tp_voice_message_handler.dart
++++ b/lib/util/web_message_handler/tp_voice_message_handler.dart
+@@ -1,9 +1,14 @@
++import 'dart:async';
++import 'dart:io';
++
+ import 'package:flutter/widgets.dart';
+ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+ import 'package:flutter_tts/flutter_tts.dart';
++import 'package:record/record.dart';
+ import 'package:speech_to_text/speech_recognition_error.dart';
+ import 'package:speech_to_text/speech_to_text.dart';
+ import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
++import 'package:whisper_ggml/whisper_ggml.dart';
+ 
+ /// 語音橋接：讓微服務網頁透過 flutterObject 使用原生中文語音辨識（STT）與朗讀（TTS）。
+ ///
+@@ -13,8 +18,13 @@ import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
+ /// App → 網頁：`{"name":"voice","data":{"event":"...", ...}}`
+ ///   event：listeningStarted | listeningStopped | speechResult(text,isFinal)
+ ///          | speechError(code,message) | speakingStarted | speakingCompleted | speakingStopped
++///          | voiceStatus(message)（例如首次下載模型，前端可忽略）
+ ///
+-/// 不使用 LLM。辨識由 Android 系統語音服務執行（一般模式可能連網）。
++/// 辨識（混合）：
++/// - 有網路：Android 系統語音服務（Google），經 speech_to_text 套件（BSD-3）。
++/// - 離線或無系統語音服務：Whisper（OpenAI，MIT）+ whisper.cpp（MIT），經 whisper_ggml 套件在裝置上執行。
++///   模型首次使用時下載（ggml-base，約 148 MB），之後不需網路。
++/// 本 Handler 不使用 LLM。
+ class VoiceMessageHandler extends TPWebMessageHandler {
+   static const int maxSpeakLength = 1000;
+ 
+@@ -61,14 +71,40 @@ class VoiceBridge {
+ 
+   static final VoiceBridge instance = VoiceBridge._();
+ 
++  /// 使用的 Whisper 模型（多語言 base）。
++  static const WhisperModel model = WhisperModel.base;
++
++  /// 引導 Whisper 輸出繁體中文，並偏向市政服務常用詞。
++  /// 注意：Whisper 在安靜時可能把提示詞原樣吐出，所以結果會再過濾（見 [_isPromptEcho]）。
++  static const String _initialPrompt = '公車、站牌、敬老卡、陳情、無障礙。';
++
+   void Function(Map<String, Object?> data)? emitter;
+ 
+-  final SpeechToText _speech = SpeechToText();
+   final FlutterTts _tts = FlutterTts();
+-  bool _speechReady = false;
++  final AudioRecorder _recorder = AudioRecorder();
++  final WhisperController _whisper = WhisperController();
+   bool _ttsReady = false;
++
++  // 線上引擎：Android 系統語音服務（Google），有網路時使用
++  final SpeechToText _speech = SpeechToText();
++  bool _speechReady = false;
++  bool _googleActive = false;
++  bool _googleAnnounced = false;
++  bool _googleFinalSent = true;
++  String _googleText = '';
++
++  // 離線引擎（Whisper）本次收音的狀態
+   bool _starting = false;
+-  bool _listeningAnnounced = false;
++  bool _listening = false;
++  bool _cancelled = false;
++  String? _audioPath;
++  StreamSubscription<Amplitude>? _amplitudeSub;
++  Timer? _maxTimer;
++  DateTime _startedAt = DateTime.now();
++  DateTime? _lastVoiceAt;
++  DateTime? _quietSince;
++  double? _noiseFloor;
++  double _speechPeak = -160;
+ 
+   void _emit(String event, [Map<String, Object?> extra = const {}]) {
+     debugPrint('VOICE_BRIDGE: $event $extra');
+@@ -77,102 +113,261 @@ class VoiceBridge {
+ 
+   void emitError(String code, String message) => _emit('speechError', {'code': code, 'message': message});
+ 
+-  Future<bool> _ensureSpeech() async {
++  /// 確保模型檔在裝置上；沒有就下載（只有第一次需要網路）。
++  Future<String?> _ensureModel() async {
++    final path = await _whisper.getPath(model);
++    if (File(path).existsSync() && File(path).lengthSync() > 1000000) return path;
++    _emit('voiceStatus', {'message': '第一次使用，正在下載離線語音模型（約 150 MB）…'});
++    try {
++      final downloaded = await _whisper.downloadModel(model);
++      if (File(downloaded).lengthSync() > 1000000) return downloaded;
++      File(downloaded).deleteSync();
++    } catch (e) {
++      debugPrint('VOICE_BRIDGE: model download failed $e');
++    }
++    return null;
++  }
++
++  /// 有網路且裝置有系統語音服務時用 Google（快、準）；否則用 Whisper 離線辨識。
++  Future<void> startListening() async {
++    if (_starting || _listening || _googleActive) return;
++    _starting = true;
++    try {
++      await _tts.stop();
++      if (!await _recorder.hasPermission()) {
++        emitError('permission_denied', '尚未允許麥克風權限，請到設定開啟');
++        return;
++      }
++      if (await _isOnline() && await _ensureGoogle()) {
++        await _startGoogle();
++      } else {
++        _emit('voiceStatus', {'message': '目前離線，使用裝置上的語音辨識，說完需稍候幾秒'});
++        await _startWhisper();
++      }
++    } catch (e) {
++      debugPrint('VOICE_BRIDGE: start failed $e');
++      emitError('start_failed', '語音辨識無法開始，請改用文字輸入');
++    } finally {
++      _starting = false;
++    }
++  }
++
++  static Future<bool> _isOnline() async {
++    try {
++      final result = await InternetAddress.lookup('www.google.com').timeout(const Duration(milliseconds: 1500));
++      return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
++    } catch (_) {
++      return false;
++    }
++  }
++
++  // ───────────── 線上：Google（Android 系統語音服務） ─────────────
++
++  Future<bool> _ensureGoogle() async {
+     if (_speechReady) return true;
+     // 只初始化一次；重複 initialize 會讓 Android 語音服務斷線（error_server_disconnected）。
+-    _speechReady = await _speech.initialize(onStatus: _onStatus, onError: _onError);
++    _speechReady = await _speech.initialize(onStatus: _onGoogleStatus, onError: _onGoogleError);
+     return _speechReady;
+   }
+ 
+-  void _onStatus(String status) {
+-    if (status == 'listening' && !_listeningAnnounced) {
+-      _listeningAnnounced = true;
++  Future<void> _startGoogle() async {
++    _googleText = '';
++    _googleFinalSent = false;
++    _googleActive = true;
++    await _speech.listen(
++      onResult: (r) => _onGoogleResult(r.recognizedWords, r.finalResult),
++      listenOptions: SpeechListenOptions(
++        listenFor: const Duration(seconds: 20),
++        pauseFor: const Duration(seconds: 4),
++        localeId: 'zh-TW',
++        partialResults: true,
++        cancelOnError: true,
++        // dictation：一般口述；search 模式會偏向地名（曾把「307」聽成「杉林溪」）
++        listenMode: ListenMode.dictation,
++      ),
++    );
++  }
++
++  void _onGoogleStatus(String status) {
++    if (status == 'listening' && !_googleAnnounced) {
++      _googleAnnounced = true;
+       _emit('listeningStarted');
+-    } else if ((status == 'notListening' || status == 'done') && _listeningAnnounced) {
+-      _listeningAnnounced = false;
++    } else if ((status == 'notListening' || status == 'done') && _googleAnnounced) {
++      _googleAnnounced = false;
+       _emit('listeningStopped');
+     }
+-    if (status == 'done') _finalizeWithLastText();
++    if (status == 'done') {
++      _finalizeGoogle();
++      _googleActive = false;
++    }
+   }
+ 
+-  void _onError(SpeechRecognitionError error) {
+-    // 部分 Google 語音服務版本結束時只回 error_client／no_match，不送 final 結果。
+-    // 若已聽到文字，就把最後一次的文字當作 final，避免整個流程卡住。
+-    if (_finalizeWithLastText()) return;
+-    emitError(error.errorMsg, _errorMessage(error.errorMsg));
++  void _onGoogleError(SpeechRecognitionError error) {
++    _googleActive = false;
++    // Google 結束時常只回 error_client、不送 final：已聽到文字就當 final。
++    if (_finalizeGoogle()) return;
++    if (_googleFinalSent) return;
++    _googleFinalSent = true;
++    final offline = error.errorMsg.startsWith('error_network') || error.errorMsg == 'error_server';
++    emitError(
++      error.errorMsg,
++      offline ? '網路不穩，請再按一次麥克風，將改用離線辨識' : '沒有聽清楚，請再按一次麥克風說話',
++    );
+   }
+ 
+-  // 本次收音的狀態
+-  String _lastText = '';
+-  bool _finalSent = true;
+-
+-  void _onResult(String text, bool isFinal) {
+-    if (_finalSent) return;
++  void _onGoogleResult(String text, bool isFinal) {
++    if (_googleFinalSent) return;
+     final trimmed = text.trim();
+-    if (trimmed.isEmpty && !isFinal) return; // 忽略空白的中間結果，避免字幕閃爍
+-    if (trimmed.isNotEmpty) _lastText = trimmed;
+-    if (isFinal) {
+-      if (_lastText.isEmpty) return; // 交給 error / done 處理
+-      _finalSent = true;
+-      _emit('speechResult', {'text': _lastText, 'isFinal': true});
+-    } else {
++    if (trimmed.isEmpty && !isFinal) return; // 忽略空白中間結果，避免字幕閃爍
++    if (trimmed.isNotEmpty) _googleText = trimmed;
++    if (isFinal && _googleText.isNotEmpty) {
++      _googleFinalSent = true;
++      _emit('speechResult', {'text': _googleText, 'isFinal': true});
++    } else if (!isFinal) {
+       _emit('speechResult', {'text': trimmed, 'isFinal': false});
+     }
+   }
+ 
+-  /// 若尚未送出 final 且有聽到文字，補送 final。回傳是否有補送。
+-  bool _finalizeWithLastText() {
+-    if (_finalSent || _lastText.isEmpty) return false;
+-    _finalSent = true;
+-    _emit('speechResult', {'text': _lastText, 'isFinal': true});
++  bool _finalizeGoogle() {
++    if (_googleFinalSent || _googleText.isEmpty) return false;
++    _googleFinalSent = true;
++    _emit('speechResult', {'text': _googleText, 'isFinal': true});
+     return true;
+   }
+ 
+-  static String _errorMessage(String code) => switch (code) {
+-    'error_speech_timeout' || 'error_no_match' => '沒有聽清楚，請再按一次麥克風說話',
+-    'error_network' || 'error_network_timeout' || 'error_server' => '語音服務需要網路，請確認連線後再試',
+-    'error_permission' || 'error_insufficient_permissions' => '尚未允許麥克風權限，請到設定開啟',
+-    'error_busy' || 'error_server_disconnected' => '語音服務忙碌中，請稍後再試',
+-    'error_language_not_supported' || 'error_language_unavailable' => '此裝置的語音服務不支援中文辨識',
+-    _ => '語音辨識發生問題，請改用文字輸入',
+-  };
++  // ───────────── 離線：Whisper ─────────────
+ 
+-  Future<void> startListening() async {
+-    if (_starting || _speech.isListening) return;
+-    _starting = true;
+-    try {
+-      await _tts.stop();
+-      if (!await _ensureSpeech()) {
+-        final permitted = await _speech.hasPermission;
+-        permitted
+-            ? emitError('service_unavailable', '此裝置沒有可用的語音辨識服務，請改用文字輸入')
+-            : emitError('permission_denied', '尚未允許麥克風權限，請到設定開啟');
++  Future<void> _startWhisper() async {
++    {
++      final modelPath = await _ensureModel();
++      if (modelPath == null) {
++        emitError('model_missing', '第一次使用需要連網下載離線語音模型，請連線後再試，或改用文字輸入');
+         return;
+       }
+-      _lastText = '';
+-      _finalSent = false;
+-      await _speech.listen(
+-        onResult: (result) => _onResult(result.recognizedWords, result.finalResult),
+-        listenOptions: SpeechListenOptions(
+-          listenFor: const Duration(seconds: 20),
+-          pauseFor: const Duration(seconds: 4),
+-          localeId: 'zh-TW',
+-          partialResults: true,
+-          cancelOnError: true,
+-          // dictation：一般口述；search 模式會偏向地名／網搜詞（曾把「307」聽成「杉林溪」）
+-          listenMode: ListenMode.dictation,
+-        ),
++
++      // 先錄成 16 kHz 單聲道 WAV，說完再一次交給 Whisper。
++      // （邊錄邊辨識在模擬器的 x86 CPU 上跟不上，且每次啟動要先載入模型約 5 秒，會漏掉開頭。）
++      _audioPath = '${Directory.systemTemp.path}/voice_utterance.wav';
++      await _recorder.start(
++        const RecordConfig(encoder: AudioEncoder.wav, sampleRate: 16000, numChannels: 1),
++        path: _audioPath!,
+       );
+-    } catch (e) {
+-      emitError('start_failed', '語音辨識無法開始，請改用文字輸入');
+-      debugPrint('VOICE_BRIDGE: start failed $e');
+-    } finally {
+-      _starting = false;
++      _cancelled = false;
++      _lastVoiceAt = null;
++      _quietSince = null;
++      _noiseFloor = null;
++      _speechPeak = -160;
++      _startedAt = DateTime.now();
++      _listening = true;
++      _emit('listeningStarted');
++      // 說完話停頓約 1.2 秒自動結束，手部不便的使用者不必再按停止
++      _amplitudeSub = _recorder.onAmplitudeChanged(const Duration(milliseconds: 150)).listen(_onAmplitude);
++      _maxTimer = Timer(const Duration(seconds: 10), _finish);
++    }
++  }
++
++  /// 依音量判斷說話是否結束。噪音底線會緩慢上升，適應有背景聲的環境；
++  /// 說話中音量明顯低於峰值（或接近底線）持續 1.2 秒即視為說完。
++  void _onAmplitude(Amplitude amplitude) {
++    if (!_listening) return;
++    final now = DateTime.now();
++    final db = amplitude.current.clamp(-120.0, 0.0);
++    final floor = _noiseFloor == null
++        ? db
++        : (db < _noiseFloor! ? db : _noiseFloor! + (db - _noiseFloor!) * 0.03);
++    _noiseFloor = floor;
++    final elapsed = now.difference(_startedAt);
++    if (elapsed < const Duration(milliseconds: 450)) return;
++
++    final speaking = db > floor + 10 && (_lastVoiceAt == null || db > _speechPeak - 18);
++    if (speaking) {
++      _lastVoiceAt = now;
++      _quietSince = null;
++      if (db > _speechPeak) _speechPeak = db;
++    } else if (_lastVoiceAt != null) {
++      _quietSince ??= now;
++      if (now.difference(_quietSince!) > const Duration(milliseconds: 1200)) _finish();
++    } else if (elapsed > const Duration(seconds: 6)) {
++      _finish();
++    }
++  }
++
++  /// 結束收音並送出最終結果。
++  Future<void> _finish() async {
++    if (!_listening) return;
++    _listening = false;
++    _maxTimer?.cancel();
++    await _amplitudeSub?.cancel();
++    await _recorder.stop();
++    _emit('listeningStopped', {
++      'recordedMs': DateTime.now().difference(_startedAt).inMilliseconds,
++      'noiseFloorDb': _noiseFloor?.round(),
++      'peakDb': _speechPeak.round(),
++    });
++
++    if (_cancelled) return;
++    // 完全沒偵測到說話：不交給 Whisper（安靜音訊容易產生幻覺文字），直接回報
++    final heardVoice = _lastVoiceAt != null;
++    var text = '';
++    if (heardVoice && _audioPath != null) {
++      _emit('voiceStatus', {'message': '辨識中…'});
++      final started = DateTime.now();
++      try {
++        final result = await _whisper
++            .transcribe(
++              model: model,
++              audioPath: _audioPath!,
++              lang: 'zh',
++              initialPrompt: _initialPrompt,
++              suppressNonSpeechTokens: true,
++              keepModelLoaded: true, // 第二句起不用重新載入模型
++            )
++            .timeout(const Duration(seconds: 40));
++        text = _clean(result?.transcription.text ?? '');
++      } catch (e) {
++        debugPrint('VOICE_BRIDGE: whisper transcribe failed $e');
++      }
++      debugPrint('VOICE_BRIDGE: transcribe took ${DateTime.now().difference(started).inMilliseconds} ms');
++    }
++    if (_cancelled) return;
++    if (_isPromptEcho(text)) text = '';
++    if (text.isEmpty) {
++      emitError('no_speech', '沒有聽清楚，請再按一次麥克風說話');
++    } else {
++      _emit('speechResult', {'text': text, 'isFinal': true});
+     }
+   }
+ 
++  /// 取消收音，不送出結果（朗讀、離開頁面時）。
++  Future<void> _cancelListening() async {
++    if (_googleActive) {
++      _googleFinalSent = true;
++      _googleActive = false;
++      await _speech.cancel();
++    }
++    if (!_listening) return;
++    _cancelled = true;
++    await _finish();
++  }
++
++  /// Whisper 在安靜或雜音時，常把提示詞或字幕常見語句當成結果。
++  static bool _isPromptEcho(String text) {
++    final t = text.replaceAll(RegExp(r'[\s，。、！？,.!?]'), '');
++    if (t.isEmpty) return true;
++    final prompt = _initialPrompt.replaceAll(RegExp(r'[\s，。、！？,.!?]'), '');
++    return prompt.contains(t) || RegExp(r'字幕|訂閱|謝謝觀看|請不吝').hasMatch(t);
++  }
++
++  /// 去掉 Whisper 的非語音標註（例如 [BLANK_AUDIO]、(笑)）與多餘空白。
++  static String _clean(String text) =>
++      text.replaceAll(RegExp(r'\[[^\]]*\]|\([^)]*\)|（[^）]*）'), '').replaceAll(RegExp(r'\s+'), ' ').trim();
++
+   Future<void> stopListening() async {
+-    if (_speech.isListening) await _speech.stop();
++    if (_googleActive) {
++      await _speech.stop(); // 已說的內容會送出 final
++    } else {
++      await _finish();
++    }
+   }
+ 
+   Future<void> _ensureTts() async {
+@@ -190,8 +385,7 @@ class VoiceBridge {
+       emitError('invalid_text', '朗讀內容為空或過長');
+       return;
+     }
+-    _finalSent = true; // 朗讀時取消收音，不再補送辨識結果
+-    if (_speech.isListening) await _speech.cancel();
++    await _cancelListening(); // 朗讀時取消收音，不再送出辨識結果
+     await _ensureTts();
+     if (await _tts.isLanguageAvailable('zh-TW') != true) {
+       emitError('tts_language_unavailable', '此裝置沒有中文朗讀語音，請直接閱讀畫面文字');
+@@ -209,8 +403,7 @@ class VoiceBridge {
+   /// 離開語音頁面時呼叫，避免背景繼續收音或朗讀。
+   Future<void> stopAll() async {
+     debugPrint('VOICE_BRIDGE: stopAll');
+-    _finalSent = true;
+-    if (_speech.isListening) await _speech.cancel();
++    await _cancelListening();
+     await _tts.stop();
+   }
+ }
+diff --git a/pubspec.lock b/pubspec.lock
+index 0aefbaa..e104960 100644
+--- a/pubspec.lock
++++ b/pubspec.lock
+@@ -313,6 +313,22 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "0.1.2"
++  ffmpeg_kit_flutter_new_min:
++    dependency: transitive
++    description:
++      name: ffmpeg_kit_flutter_new_min
++      sha256: "1fce79b73ebbcf34e1063ed84cacc4920adfbb8631877e585302e68157b0ace3"
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.1.0"
++  ffmpeg_kit_flutter_platform_interface:
++    dependency: transitive
++    description:
++      name: ffmpeg_kit_flutter_platform_interface
++      sha256: addf046ae44e190ad0101b2fde2ad909a3cd08a2a109f6106d2f7048b7abedee
++      url: "https://pub.dev"
++    source: hosted
++    version: "0.2.1"
+   file:
+     dependency: transitive
+     description:
+@@ -557,6 +573,14 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "10.0.2"
++  freezed_annotation:
++    dependency: transitive
++    description:
++      name: freezed_annotation
++      sha256: "7294967ff0a6d98638e7acb774aac3af2550777accd8149c90af5b014e6d44d8"
++      url: "https://pub.dev"
++    source: hosted
++    version: "3.1.0"
+   geoclue:
+     dependency: transitive
+     description:
+@@ -1085,6 +1109,54 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "1.6.0"
++  record:
++    dependency: "direct main"
++    description:
++      name: record
++      sha256: "7c4467dec63435c9206db183f8a4672cf8a62f5e5579e45803ceada8330756e7"
++      url: "https://pub.dev"
++    source: hosted
++    version: "7.1.2"
++  record_android:
++    dependency: transitive
++    description:
++      name: record_android
++      sha256: f5080279259c4ad769590f1c165762eaa4e414178adc2e2fab137103228e07ac
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.2.0"
++  record_ios:
++    dependency: transitive
++    description:
++      name: record_ios
++      sha256: "21d189f49a598af4697dac4cc9e48389ac0a1fb3e916622b5504a58d9b96313e"
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.1.1"
++  record_linux:
++    dependency: transitive
++    description:
++      name: record_linux
++      sha256: "00c847ba25684572674dacfbd4bcabee6c5d9a1fa948778ff34091c71c19250f"
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.1.3"
++  record_macos:
++    dependency: transitive
++    description:
++      name: record_macos
++      sha256: ced7495abf3d683e8a7dbe8fc96df8ea5722837a26f922b7cb7c5de11661bb46
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.1.1"
++  record_platform_interface:
++    dependency: transitive
++    description:
++      name: record_platform_interface
++      sha256: d94b37cadb8fe203e64b0e9893271c0b71b34f2550ee7fb0c6105d650e00c1f5
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.1.0"
+   record_use:
+     dependency: transitive
+     description:
+@@ -1093,6 +1165,22 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "1.1.1"
++  record_web:
++    dependency: transitive
++    description:
++      name: record_web
++      sha256: "7f6950be87abacb05cf77eb6ca200b60f2c2a6af5d50236b5f4baf53f92e755e"
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.1.3"
++  record_windows:
++    dependency: transitive
++    description:
++      name: record_windows
++      sha256: "8195489a47b5e8246985d6213ff65aae1b14e32a0ca45dc5f680e8d503296e1b"
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.3.0"
+   rxdart:
+     dependency: transitive
+     description:
+@@ -1506,6 +1594,14 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "3.0.3"
++  whisper_ggml:
++    dependency: "direct main"
++    description:
++      name: whisper_ggml
++      sha256: "2b478898f3db902104e6d02b66bffa4b38422ba050f227cf1c3318570bd94fd8"
++      url: "https://pub.dev"
++    source: hosted
++    version: "2.9.0"
+   win32:
+     dependency: transitive
+     description:
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 81c78a1..0a77952 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -56,8 +56,10 @@ dependencies:
+   # The following adds the Cupertino Icons font to your application.
+   # Use with the CupertinoIcons class for iOS style icons.
+   cupertino_icons: ^2.0.0
+-  speech_to_text: 7.5.0
+   flutter_tts: 4.2.5
++  whisper_ggml: 2.9.0
++  record: 7.1.2
++  speech_to_text: 7.5.0
+ 
+ dev_dependencies:
+   build_runner: ^2.16.1
 -- 
 2.56.0.windows.2
 

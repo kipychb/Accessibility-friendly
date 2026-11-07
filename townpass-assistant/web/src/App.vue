@@ -86,7 +86,8 @@ function toggleVoice() {
   listening.value = true
   try {
     startListening({
-      onStart: () => { listening.value = true },
+      onStart: () => { listening.value = true; notice.value = '' },
+      onStatus: (message) => { notice.value = message },
       onPartial: (partial) => { text.value = partial },
       // 只有 final 且非空才送出查詢，同一句只送一次
       onFinal: (finalText) => {
