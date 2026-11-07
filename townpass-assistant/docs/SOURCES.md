@@ -16,4 +16,10 @@
 - [站牌](https://tcgbusfs.blob.core.windows.net/blobbus/GetStop.gz)
 - [到站預估](https://tcgbusfs.blob.core.windows.net/blobbus/GetEstimateTime.gz)
 
-目前使用上述白名單。天氣、垃圾車、個人台北通帳號和私人案件紀錄在查詢範圍之外。
+服務清單涵蓋會員、卡證、帳務、優惠、市政服務、訊息、地圖與生活及交通八個分類。其他項目與問法請見 JSON，新增服務可直接加入資料表的種子檔。使用者問題會以最長符合的別名分流，包含「台北通」但找不到具體項目時會提供官方教學。
+
+公車到站為即時查詢。其他項目提供官網導引，包含垃圾清運查詢、YouBike 站點、帳單與付款、會員及案件進度。個人金額、借閱紀錄、資格、付款、預約及報案須在官方服務依指示操作。
+
+- [台北通卡證](https://id.taipei/tpcd/about/features/card) · [台北通市政服務](https://id.taipei/tpcd/about/features/connect) · [台北通帳單](https://id.taipei/tpcd/about/features/bill) · [特約商家](https://id.taipei/tpcd/offers)
+- [台北通功能教學與常見問題](https://id.taipei/tpcd/about/faq) · [臺北市單一識別服務作業要點](https://id.taipei/tpcd/about/policies/terms)
+- [開源城市通服務清單](https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart)

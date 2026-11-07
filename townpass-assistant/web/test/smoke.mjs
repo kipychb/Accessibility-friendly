@@ -127,7 +127,7 @@ try {
   await evaluate("document.querySelector('.app-bar .icon-button').click()")
   await waitFor("document.querySelector('.settings-panel .secondary')?.textContent.includes('可查詢的服務')")
   await evaluate("document.querySelector('.settings-panel .secondary').click()")
-  await waitFor("document.querySelectorAll('.settings-panel a').length === 6")
+  await waitFor("document.querySelectorAll('.settings-panel a').length >= 55")
   console.log('Browser smoke passed: five screens, round mic, simulated speech, draft editing, services')
 } finally {
   try {
