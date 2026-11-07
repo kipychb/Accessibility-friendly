@@ -1,0 +1,24 @@
+# 前端（Vue／Vite）：用 npm ci 與 npm run build 重新產生
+node_modules/
+dist/
+
+# 後端（Maven）：用 mvn package 重新產生
+# 注意：townpass-assistant/target/ 目前仍被追蹤，是否移除請由後端負責人決定
+target/
+
+# Flutter／Android
+.dart_tool/
+.flutter-plugins-dependencies
+build/
+.gradle/
+local.properties
+*.iml
+.idea/
+
+# 系統與編輯器
+.DS_Store
+Thumbs.db
+.vscode/
+
+# 本機暫存
+PR_DESCRIPTION.md
