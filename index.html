@@ -35,7 +35,8 @@
   position: relative;
   overflow: hidden;
   background: #fff;
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+  /* 頂部不留安全區域：TownPass 標題列已處理狀態列，WebView 仍回報其高度會造成空白 */
+  padding: 0 env(safe-area-inset-right, 0px)
     env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 .topbar {
@@ -101,6 +102,29 @@ const symbols={mic:'i-mic',wave:'i-wave',square:'i-square',bot:'i-bot',volume:'i
 const icon=(id,size=20)=>`<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><use href="#${id}"/></svg>`;
 const data=[{id:'complaint_1999',name:'有話要說／1999陳情',description:'協助整理市政問題，確認內容後前往官方系統完成陳情。',url:'https://1999.gov.taipei/'},{id:'member',name:'臺北通會員服務',description:'會員登入、註冊與驗證方式的使用指引。',url:'https://id.taipei/'},{id:'cards',name:'數位卡證',description:'查詢臺北通數位卡證使用方式與入口。',url:'https://id.taipei/'},{id:'payment',name:'帳單及繳費',description:'說明臺北通提供的繳費功能與操作方式。',url:'https://id.taipei/'},{id:'coupon',name:'優惠及優惠券',description:'查詢臺北通優惠相關服務入口。',url:'https://id.taipei/'}];
 let state={screen:'home',listening:false,session:'tp-'+Math.random().toString(36).slice(2,10),conversation:[],complaint:null,apiUrl:'http://localhost:8080/api/v1/query',useAPI:false,autoSpeak:true,language:'zh-TW',recognition:null,originalScreen:'home',transcript:'',recognitionBase:'',recognitionFinal:'',recognitionInterim:'',stopRequested:false,restartTimer:null,audioStream:null,audioCtx:null,audioFrame:null,audioAnalyser:null,apiContext:null,apiBusy:false};let toastTimer;
+// 由後端（Spring Boot）提供頁面時，直接使用同源的 /api/v1/query；用檔案開啟時維持本機示範。
+if(/^https?:$/.test(location.protocol)){state.apiUrl=location.origin+'/api/v1/query';state.useAPI=true;}
+// 臺北通 App 內：Android WebView 不支援 SpeechRecognition，語音改走 TownPass 原生 voice Handler。
+// 協定見 device-bridge/README.md；一般瀏覽器沒有 flutterObject，仍使用瀏覽器語音。
+const tp=window.flutterObject;
+const tpSend=(action,extra={})=>tp.postMessage(JSON.stringify({name:'voice',data:{action,...extra}}));
+if(tp)tp.addEventListener('message',ev=>{let m;try{m=typeof ev.data==='string'?JSON.parse(ev.data):ev.data}catch(e){return}if(m&&m.name==='voice'&&m.data)onNativeVoice(m.data)});
+function onNativeVoice(d){
+  switch(d.event){
+    case 'speechResult':
+      if(!state.listening)return;
+      state.transcript=String(d.text||'').trim();displayTranscript();
+      if(d.isFinal)finishListening();
+      break;
+    case 'speechError':
+      if(!state.listening){if(/^tts|invalid_text/.test(d.code||''))toast(d.message||'無法播放語音，請查看文字回覆');return;}
+      {const draft=state.transcript;cancelRecognition();state.screen='chat';render();input.value=draft;toast(d.message||'語音辨識發生問題，請改用文字輸入');}
+      break;
+    case 'voiceStatus':{const sub=document.querySelector('.listen-surface .home-sub');if(sub)sub.textContent=d.message;else toast(d.message);break;}
+    case 'listeningStopped':{const t=document.querySelector('.listen-surface .home-title');if(t&&state.listening)t.textContent='辨識中…';break;}
+  }
+}
+function stopSpeak(){if(tp)tpSend('stopSpeaking');else window.speechSynthesis?.cancel();}
 function safe(text){return String(text??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function toast(text){$('toast').textContent=text;$('toast').classList.remove('hide');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hide'),3400)}
 function top(){compose.classList.toggle('hide',state.screen!=='chat');}
@@ -157,6 +181,8 @@ function startListening(){
   state.stopRequested=false;state.recognitionError=false;
   state.transcript='';state.recognitionBase='';state.recognitionFinal='';state.recognitionInterim='';
   render();
+  // App 內由原生端收音；不可再用 getUserMedia 搶麥克風
+  if(tp){stopSpeak();tpSend('startListening');return;}
   startAudioMeter();
   const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!Speech){toast('此瀏覽器不支援語音辨識，請改用文字輸入');cancelRecognition();state.screen='chat';render();input.focus();return;}
@@ -210,6 +236,7 @@ function startListening(){
   launch();
 }
 function cancelRecognition(){
+  if(tp&&state.listening)tpSend('stopListening');
   stopAudioMeter();
   state.listening=false;state.stopRequested=false;
   clearTimeout(state.restartTimer);state.restartTimer=null;
@@ -226,6 +253,8 @@ function finishListening(){
 function stopListening(){
   if(!state.listening||state.stopRequested)return;
   state.stopRequested=true;
+  // App 內：請原生端停止，已說的內容會以 isFinal 回傳後再查詢
+  if(tp){tpSend('stopListening');return;}
   clearTimeout(state.restartTimer);state.restartTimer=null;
   const r=state.recognition;
   // stop() 允許瀏覽器送出最後的辨識結果，再由 onend 送出完整文字。
@@ -235,7 +264,7 @@ function stopListening(){
 function bubble(entry,index){const user=entry.role==='user',head=user?'你（語音轉文字）':'臺北通 助理';let buttons='';if(!user){buttons=`<div class="divider"></div><button class="speak-again" data-speak="${index}">${icon('i-volume',19)} 播放回覆</button>`}return `<div class="bubble ${user?'user':'ai'}"><div class="bubble-head"><span class="bubble-avatar ${user?'user-avatar':''}">${icon(user?'i-user':'i-bot',19)}</span>${head}</div><div class="bubble-text">${safe(entry.text)}</div>${entry.url&&/^https:\/\//.test(entry.url)?`<div class="actions"><button class="primary" data-open="${index}">${icon('i-external',17)} ${entry.cta||'前往官方服務'}</button>${entry.edit?'<button class="secondary" id="editDraft">修改內容</button>':''}</div>`:''}${buttons}</div>`}
 function chat(){let messages=state.conversation.map(bubble).join('');main.innerHTML=`<div class="chat"><div class="chat-meta">以臺北通既有功能為服務範圍</div>${messages||'<div class="empty">您可以直接說出需求，或在下方輸入文字。</div>'}${state.complaint&&state.complaint.stage==='location'?'<div class="warning">請補充地點；尚未送出任何正式陳情。</div>':''}</div>`;main.querySelectorAll('[data-speak]').forEach(btn=>btn.onclick=()=>speak(state.conversation[+btn.dataset.speak].text));main.querySelectorAll('[data-open]').forEach(btn=>btn.onclick=()=>{let e=state.conversation[+btn.dataset.open];window.open(e.url,'_blank','noopener,noreferrer')});const edit=$('editDraft');if(edit)edit.onclick=()=>{state.complaint={stage:'detail',location:state.complaint?.location||'',description:state.complaint?.description||''};addAI('請說出需要修改的陳情內容，或直接在下方輸入。')};main.scrollTop=main.scrollHeight;}
 function addAI(text,extra={}){state.conversation.push({role:'ai',text,...extra});if(state.screen!=='chat')return;render();if(state.autoSpeak)speak(text)}
-function speak(text){if(!('speechSynthesis'in window)){toast('此裝置不支援語音朗讀');return}try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang=state.language;u.rate=.92;u.pitch=1;let voices=speechSynthesis.getVoices();let match=voices.find(v=>v.lang.toLowerCase()===state.language.toLowerCase())||voices.find(v=>v.lang.startsWith('zh'));if(match)u.voice=match;speechSynthesis.speak(u)}catch(e){toast('無法播放語音，請查看文字回覆')}}
+function speak(text){if(tp){tpSend('speak',{text:String(text||'').slice(0,1000)});return}if(!('speechSynthesis'in window)){toast('此裝置不支援語音朗讀');return}try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang=state.language;u.rate=.92;u.pitch=1;let voices=speechSynthesis.getVoices();let match=voices.find(v=>v.lang.toLowerCase()===state.language.toLowerCase())||voices.find(v=>v.lang.startsWith('zh'));if(match)u.voice=match;speechSynthesis.speak(u)}catch(e){toast('無法播放語音，請查看文字回覆')}}
 async function send(text){
  text=String(text||'').trim();if(!text||state.apiBusy)return;
  if([...text].length>1500){toast('最多支援1500字，請縮短內容');return;}
@@ -264,7 +293,7 @@ function mine(){main.innerHTML=`<div class="settings"><h2>我的</h2><div class=
 function settings(){main.innerHTML=`<div class="settings"><h2>語音助理設定</h2><label for="apiUrl">後端 API 網址</label><input id="apiUrl" type="url" placeholder="http://localhost:8080/api/ask" value="${safe(state.apiUrl)}"><div class="toggle-row"><label for="useAPI">啟用後端查詢</label><input id="useAPI" type="checkbox" ${state.useAPI?'checked':''}></div><div class="toggle-row"><label for="autoSpeak">自動朗讀系統回答</label><input id="autoSpeak" type="checkbox" ${state.autoSpeak?'checked':''}></div><label for="lang">語音語言</label><select id="lang"><option value="zh-TW">國語（臺灣）</option><option value="en-US">English</option></select><p class="note">此設定適用於語音輸入和朗讀。查詢回覆以中文提供。</p><button id="saveSettings" class="primary">儲存設定</button></div>`;$('lang').value=state.language;$('saveSettings').onclick=()=>{let url=$('apiUrl').value.trim();if(url&&!/^https?:\/\//i.test(url)){toast('請輸入完整的 http 或 https 網址');return}state.apiUrl=url;state.useAPI=$('useAPI').checked;state.autoSpeak=$('autoSpeak').checked;state.language=$('lang').value;state.screen='home';render();toast('設定已儲存（本次開啟期間）')}}
 async function goHome(){
   cancelRecognition();
-  window.speechSynthesis?.cancel();
+  stopSpeak();
   try {
     const bridge = window.flutter_inappwebview;
     if (bridge?.callHandler && await bridge.callHandler('townPassReturnHome') === true) return;
