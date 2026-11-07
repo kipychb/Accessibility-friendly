@@ -2,15 +2,15 @@
 
 ## 內容
 
-- `index.html`：**主要交付檔**，單檔 HTML / CSS / JavaScript，不需安裝套件。依參考圖重新製作手機版介面，麥克風已加大至 170×170 px（桌面模擬手機畫面；手機上依螢幕自適應）。
+- `index.html`：**主要交付檔**，單檔 HTML / CSS / JavaScript，不需安裝套件。畫面填滿 WebView，圓形麥克風會依可用空間調整。
 - `vue/`：供既有 Vue + Vite 專案整合的**簡易展示容器**，透過 iframe 顯示同一份單檔前端。實際 UI 邏輯仍在 `vue/public/townpass.html`，不是原生 Vue 元件的完整改寫。
 
-**介面更新：** 已移除底部「首頁／服務／我的」整排導覽按鈕，主畫面與對話區使用釋出的空間；保留頂部返回與設定功能。
+**介面更新：** 「回到首頁」固定在頂部，按鈕和服務連結按下時會填色。對話與設定內容可在頂部下方捲動。
 
 ## 快速使用
 
 1. 在 VS Code 或檔案總管開啟 `index.html`。建議透過 VS Code Live Server 或本機 HTTP 伺服器提供網站。
-2. 開啟頁面，點選「開始使用」。
+2. 開啟頁面後會直接進入語音查詢。
 3. 可點選示範提問「我要申訴道路問題」，在下方輸入「中山區民生東路三段附近」，即可顯示陳情內容與 1999 官方網址。
 4. 中央大麥克風會嘗試使用瀏覽器 `SpeechRecognition`；需要瀏覽器支援、麥克風授權，通常也需要 HTTPS 或 localhost。若無法使用，頁面會引導切換文字輸入。
 5. 「設定」→「啟用後端查詢」，輸入 Spring Boot API 的完整網址，例如 `http://localhost:8080/api/ask`。需要後端允許前端 Origin (CORS)。預設使用本機示範資料，不會擅自送件。
@@ -24,6 +24,24 @@ npm run dev
 ```
 
 預設 Vite 開發網址通常是 `http://localhost:5173`。此容器只是讓單檔互動介面快速置入 Vue 專案；若競賽明定所有畫面須以 Vue 元件實作，仍需將邏輯拆成 Vue SFC。
+
+## Flutter DEMO
+
+將部署後的 `index.html` 直接載入 Flutter WebView（若經 Vite 部署，直接載入 `/townpass.html`）。網頁使用裝置寬度和 WebView 的可用高度，並依螢幕大小調整麥克風和內容間距。網頁內的按鈕、字體和間距在 HTML 的 CSS 調整。App 原生標題列、安全區域和 WebView 本身的尺寸在 Flutter 外層調整。
+
+若從臺北通首頁開啟微服務，在該頁專用的 `onWebViewCreated` 中註冊 `townPassReturnHome`，讓「回到首頁」關閉微服務頁並回到原生首頁。只在載入自家微服務的 WebView 註冊這個處理器。
+
+```dart
+controller.addJavaScriptHandler(
+  handlerName: 'townPassReturnHome',
+  callback: (_) {
+    Get.back();
+    return true;
+  },
+);
+```
+
+一般瀏覽器或沒有註冊處理器時，按鈕會回到網頁內的語音查詢主畫面。
 
 ## API 格式
 
