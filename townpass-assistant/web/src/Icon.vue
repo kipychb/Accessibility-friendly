@@ -9,6 +9,10 @@ defineProps({ name: String })
       <rect x="9" y="2.5" width="6" height="12" rx="3" />
       <path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3" />
     </template>
+    <template v-else-if="name === 'sun'">
+      <circle cx="12" cy="12" r="5" />
+      <path d="M12 1v3m0 16v3M1 12h3m16 0h3M4.3 4.3l2.1 2.1m11.2 11.2 2.1 2.1M19.7 4.3l-2.1 2.1M6.4 17.6l-2.1 2.1" />
+    </template>
     <path v-else-if="name === 'wave'" stroke-width="2.8" d="M3 11v2m4-6v10m5-14v18m5-14v10m4-6v2" />
     <path v-else-if="name === 'back'" d="m15 5-7 7 7 7" />
     <template v-else-if="name === 'settings'">

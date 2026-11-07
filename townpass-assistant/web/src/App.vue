@@ -172,26 +172,25 @@ onUnmounted(() => {
       </section>
 
       <section v-else-if="screen === 'home'" class="home">
-        <div class="greeting">
-          <svg class="waves" viewBox="0 0 390 84" preserveAspectRatio="none" aria-hidden="true">
-            <path fill="#e0f4f4" d="M0 57 Q52 12 113 48 T239 63 Q278 60 326 32 Q360 14 390 29 V84 H0Z"/>
-            <path fill="#d5eff0" opacity=".72" d="M0 80 Q54 47 80 61 T185 71 Q230 88 302 72 T390 62 V84H0Z"/>
-          </svg>
-          <span class="greeting-icon"><Icon name="greeting" /></span>
-          <h2>陳小姐，早安</h2>
+        <!-- 首頁版面沿用前端 A（TownPass-Front-end） -->
+        <div class="hero">
+          <div class="hero-content"><span class="avatar"><Icon name="sun" /></span>您好，想查什麼？</div>
         </div>
         <div class="voice-panel">
-          <button class="voice" type="button" aria-label="開始說話" :disabled="busy" @click="toggleVoice">
+          <button class="voice" type="button" aria-label="按下開始語音輸入" :disabled="busy" @click="toggleVoice">
             <Icon name="mic" />
           </button>
-          <h2>點擊說話</h2>
+          <h2>按住說話</h2>
           <p>或直接說出你的需求</p>
           <div class="examples">
             <h3>你可以這樣說</h3>
-            <button v-for="question in examples" :key="question" class="chip" :disabled="busy"
-              @click="askExample(question)">{{ question }}</button>
+            <div class="chip-list">
+              <button v-for="question in examples" :key="question" class="chip" :disabled="busy"
+                @click="askExample(question)">{{ question }}</button>
+            </div>
+            <p class="tap-hint">點選麥克風開始；未支援語音時可改用文字</p>
+            <button class="text-button" @click="compose()">改用文字輸入</button>
           </div>
-          <button class="text-button" @click="compose()">改用文字輸入</button>
         </div>
       </section>
 

@@ -126,32 +126,73 @@ button:not(:disabled):active, a.primary:active, a.secondary:active {
 }
 .greeting-icon { width: 60px; height: 60px; }
 .greeting-icon svg { width: 38px; height: 38px; }
-.voice-panel { position: relative; margin-top: -13px; padding: 18px 22px 12px; border-radius: 30px 30px 0 0; background: var(--paper); text-align: center; }
+
+/* ── 首頁：沿用前端 A（TownPass-Front-end）的版面 ── */
+.hero {
+  height: 150px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  padding: 34px 27px;
+  background: linear-gradient(150deg, #f8fefe, #e2f5f7);
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -95px;
+  bottom: -55px;
+  width: 240px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(208, 239, 240, .8);
+  transform: rotate(-10deg);
+}
+.hero-content { position: relative; z-index: 1; display: flex; align-items: center; gap: 13px; font-size: 1.2rem; font-weight: 800; }
+.hero-content .avatar { width: 46px; height: 46px; background: linear-gradient(#e5fbfb, #bce6e8); color: #087d86; }
+.hero-content .avatar svg { width: 26px; height: 26px; }
+.voice-panel {
+  position: relative;
+  min-height: calc(100% - 131px);
+  margin-top: -19px;
+  padding: 18px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 29px 29px 0 0;
+  background: #fff;
+  text-align: center;
+}
 .voice {
   display: grid;
   place-items: center;
-  width: clamp(142px, 44vw, 172px);
-  aspect-ratio: 1;
-  margin: 0 auto 12px;
+  width: 170px;
+  height: 170px;
+  margin: 12px auto;
   border-radius: 50%;
-  border: 8px solid #ccebed;
-  color: white;
-  background: radial-gradient(ellipse at 34% 25%, #218c94, #126c76 76%);
-  box-shadow: inset 0 0 0 4px #e6f7f7, 0 3px 9px #177a8224;
+  border: 9px solid #d7f1f3;
+  color: #fff;
+  background: linear-gradient(135deg, #078a91, #075f69);
+  box-shadow: 0 0 0 6px #f4fbfb, 0 7px 15px rgba(21, 119, 125, .17);
 }
-.voice svg { width: 56px; height: 56px; }
-.voice-panel h2 { font-size: 1.65rem; }
-.voice-panel > p { margin-top: 4px; }
-.examples { display: grid; justify-items: center; gap: 7px; margin: 22px auto 0; }
-.examples h3 { justify-self: start; font-size: 1.03rem; }
+.voice svg { width: 75px; height: 75px; }
+.voice-panel h2 { margin: 2px 0 4px; font-size: 1.45rem; font-weight: 850; }
+.voice-panel > p { font-size: .94rem; color: #4b6670; }
+.examples { width: 100%; margin-top: auto; padding-top: 24px; }
+.examples h3 { margin-bottom: 10px; font-size: .88rem; font-weight: 800; text-align: left; }
+.chip-list { display: flex; flex-direction: column; align-items: center; gap: 9px; }
 .chip {
+  min-width: 175px;
   min-height: 44px;
-  padding: 4px 20px;
-  border: 1px solid #c6dfe3;
-  border-radius: 30px;
-  background: #e7f2f4;
-  font-weight: 700;
+  padding: 8px 18px;
+  border: 1px solid #d6e9ed;
+  border-radius: 20px;
+  background: #eaf6f8;
+  color: #263d48;
+  font-size: .94rem;
+  box-shadow: 0 2px 3px #edf4f5;
 }
+.tap-hint { margin-top: 15px; font-size: .78rem; color: #7a9198; }
 .text-button, .play { min-height: 44px; border: 0; background: transparent; font-weight: 700; }
 .text-button { color: #13666f; }
 .record { padding: clamp(35px, 9.7vh, 82px) 20px 12px; text-align: center; }
