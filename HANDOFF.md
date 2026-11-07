@@ -59,7 +59,7 @@
 
 ## 待辦（依優先順序）
 1. ~~307 路線解析~~ ✅、補問可直接說終點名稱 ✅、補問朗讀完自動收音 ✅ → **模擬器實測**（例：「307公車西門站還有多久到」→ 說「撫遠街」）
-2. 服務範圍外（OUT_OF_SCOPE）提供 1999 一鍵撥號與官方聯絡方式（TownPass 已內建 `phone_call`／`1999agree` Handler）
+2. ~~服務範圍外提供 1999 一鍵撥號~~ ✅（`index.html` 用 TownPass 內建 `phone_call` Handler）→ 待模擬器實測
 3. 中文系統性測試：55 項服務各 2–3 種自然問法，修規則或別名（例：「身心障礙證明」對不到 disability-card）
 4. 離線模式開關（強制 Whisper），因無法向主辦方確認 Google 語音是否合規
 5. 英文問題用英文回答（Gemma 在裝置上翻譯後端答案、英文 TTS）
@@ -67,6 +67,7 @@
 7. 實體手機測試
 
 ## 注意事項
+- **前端更新後，TownPass 裡的語音助理頁不會自動重新載入**：要 `adb shell am force-stop com.example.townpass` 再重開
 - 不要 commit `node_modules`、`dist`、`target`（已有 `.gitignore`；`townpass-assistant/target/` 仍被追蹤，未處理）
 - `run-as` 讀不到 `/sdcard`，放檔要用 `adb exec-in ... cat >`
 - Git Bash 會把 `/sdcard/...` 轉成 Windows 路徑，adb 刪檔請用 PowerShell
