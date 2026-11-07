@@ -244,7 +244,8 @@ function gemmaWarmUp(){
   });
 }
 function retryWarmUp(){if(state.listening||state.apiBusy){setTimeout(retryWarmUp,15000);return}gemmaWarmUp();}
-function llmGenerate(system,prompt,timeoutMs=45000){
+// 逾時 60 秒：模擬器上第二次以後的推論實測約 37 秒，45 秒容易逾時（原生端同步採用此值並取消推論）
+function llmGenerate(system,prompt,timeoutMs=60000){
   const id=++gemma.seq;
   return new Promise((resolve,reject)=>{
     gemma.pending.set(id,{resolve,reject});
