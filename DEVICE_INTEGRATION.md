@@ -6,6 +6,15 @@
 - 「307公車還有多久到」辨識正確（dictation 模式；search 模式曾誤聽為「杉林溪」）。
 - 網頁先顯示字幕再 `speak()` → 原生朗讀，`speakingStarted`／`speakingCompleted` 回傳；朗讀後字幕保留，喇叭實際聽到聲音。
 
+## 前端整合（townpass-assistant/web）
+- 新增 `src/voice.js`：App 內走 TownPass 原生語音，一般瀏覽器沿用 Web Speech（smoke 測試相容）。
+- `App.vue`：語音改用 voice.js；回覆顯示後自動朗讀；辨識錯誤顯示原生中文訊息並聚焦文字框。
+- 模擬器實測：說「一號公車華江站往松仁路幾點來」→ final → `/api/v1/query` 真實到站資料 → 字幕 → 自動朗讀 ✅
+- 本機測試：後端 `java -jar assistant-1.0.0.jar --server.address=127.0.0.1`，`adb reverse tcp:8080 tcp:8080`，
+  TownPass 以 `--dart-define=VOICE_ASSISTANT_URL=http://localhost:8080/` 編譯。
+- 待後端／問題理解處理：「307公車還有多久到」後端未辨識路線 307（context.route 為空）。
+- 注意：repo 缺 `.gitignore`，`web/node_modules`、`web/dist`、`target/` 勿 commit。
+
 ## 第五階段測試（模擬器）
 | 情境 | 結果 |
 |---|---|

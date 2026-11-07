@@ -1,8 +1,8 @@
 <script setup>
 import { computed, nextTick, onUnmounted, ref } from 'vue'
 import Icon from './Icon.vue'
+import { cancelListening, speak, startListening, stopListening, stopSpeaking, voiceMode } from './voice.js'
 
-const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition
 const text = ref('')
 const turns = ref([])
 const context = ref(null)
@@ -24,11 +24,7 @@ function enable() {
 }
 
 function cancelRecording() {
-  if (recognition) {
-    recognition.onend = null
-    recognition.abort()
-    recognition = null
-  }
+  if (listening.value) cancelListening()
   listening.value = false
 }
 
@@ -65,44 +61,39 @@ function askExample(question) {
 }
 
 function stopVoice() {
-  if (listening.value) recognition.stop()
+  if (listening.value) stopListening()
   else if (text.value.trim()) submit(text.value)
 }
-let recognition
-let finalized = false
 
 function toggleVoice() {
   if (listening.value || busy.value) return
+  stopSpeaking()
   screen.value = 'record'
   text.value = ''
   notice.value = ''
-  if (!Recognition) {
+  if (voiceMode === 'none') {
     notice.value = '這個環境無法使用語音辨識。可以輸入文字或使用裝置鍵盤的語音輸入。'
     nextTick(() => input.value?.focus())
     return
   }
-  finalized = false
-  notice.value = ''
-  recognition = new Recognition()
-  recognition.lang = 'zh-TW'
-  recognition.interimResults = true
-  recognition.onstart = () => { listening.value = true }
   listening.value = true
-  recognition.onresult = (event) => {
-    const result = event.results[event.results.length - 1]
-    text.value = result[0].transcript
-    finalized = result.isFinal
-  }
-  recognition.onerror = () => {
-    finalized = false
-    notice.value = '語音辨識目前無法使用。請檢查麥克風權限，或改用文字輸入。'
-  }
-  recognition.onend = () => {
-    listening.value = false
-    if (finalized && text.value.trim()) submit(text.value)
-  }
   try {
-    recognition.start()
+    startListening({
+      onStart: () => { listening.value = true },
+      onPartial: (partial) => { text.value = partial },
+      // 只有 final 且非空才送出查詢，同一句只送一次
+      onFinal: (finalText) => {
+        listening.value = false
+        text.value = finalText
+        if (finalText.trim()) submit(finalText)
+      },
+      onError: (message) => {
+        listening.value = false
+        notice.value = message || '語音辨識目前無法使用。請檢查麥克風權限，或改用文字輸入。'
+        nextTick(() => input.value?.focus())
+      },
+      onEnd: () => { listening.value = false },
+    })
   } catch {
     listening.value = false
     notice.value = '無法啟動麥克風。你仍可輸入文字。'
@@ -125,6 +116,9 @@ async function submit(question, selectedContext = context.value) {
     screen.value = 'reply'
     context.value = reply.context ?? null
     text.value = ''
+    // 先顯示完整字幕，再自動朗讀；朗讀失敗不清除字幕
+    await nextTick()
+    if (reply.speech) play(reply.speech)
   } catch {
     notice.value = '暫時無法查詢，請稍後再試。'
   } finally {
@@ -133,14 +127,8 @@ async function submit(question, selectedContext = context.value) {
 }
 
 function play(speech) {
-  if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
-    notice.value = '這個環境無法播放語音，仍可閱讀文字回覆。'
-    return
-  }
-  speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(speech)
-  utterance.lang = 'zh-TW'
-  speechSynthesis.speak(utterance)
+  const ok = speak(speech, { onError: (message) => { notice.value = message || '無法播放語音，請閱讀文字回覆。' } })
+  if (!ok) notice.value = '這個環境無法播放語音，仍可閱讀文字回覆。'
 }
 
 function reset() {
@@ -153,11 +141,8 @@ function reset() {
 }
 
 onUnmounted(() => {
-  if (recognition) {
-    recognition.onend = null
-    recognition.abort()
-  }
-  window.speechSynthesis?.cancel()
+  cancelRecording()
+  stopSpeaking()
 })
 </script>
 
