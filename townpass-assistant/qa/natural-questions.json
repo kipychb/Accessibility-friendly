@@ -1,0 +1,542 @@
+[
+ {
+  "id": "bus-arrivals",
+  "q": "我要搭公車，307公車還有多久會來"
+ },
+ {
+  "id": "bus-arrivals",
+  "q": "幫我看一號公車到哪裡了"
+ },
+ {
+  "id": "road-report",
+  "q": "我家門口的路燈壞了要找誰"
+ },
+ {
+  "id": "road-report",
+  "q": "人行道坑坑洞洞輪椅過不去我要反映"
+ },
+ {
+  "id": "senior-card",
+  "q": "我阿嬤滿65歲要去哪裡辦敬老卡"
+ },
+ {
+  "id": "senior-card",
+  "q": "老人搭車的卡怎麼申請"
+ },
+ {
+  "id": "disability-card",
+  "q": "我有身心障礙手冊可以辦愛心卡嗎"
+ },
+ {
+  "id": "disability-card",
+  "q": "身障朋友搭捷運的優惠卡怎麼辦"
+ },
+ {
+  "id": "accessible-toilets",
+  "q": "附近哪裡有無障礙廁所"
+ },
+ {
+  "id": "accessible-toilets",
+  "q": "我坐輪椅想找可以用的廁所"
+ },
+ {
+  "id": "accessible-taxi",
+  "q": "坐輪椅要怎麼叫計程車"
+ },
+ {
+  "id": "accessible-taxi",
+  "q": "我要叫可以上輪椅的車"
+ },
+ {
+  "id": "member-registration",
+  "q": "我要怎麼註冊台北通"
+ },
+ {
+  "id": "member-registration",
+  "q": "第一次用台北通要怎麼申請帳號"
+ },
+ {
+  "id": "member-login",
+  "q": "台北通要怎麼登入"
+ },
+ {
+  "id": "member-login",
+  "q": "我登不進去台北通"
+ },
+ {
+  "id": "member-password",
+  "q": "我忘記台北通的密碼了"
+ },
+ {
+  "id": "member-password",
+  "q": "帳號被鎖住了怎麼辦"
+ },
+ {
+  "id": "member-verification",
+  "q": "怎麼升級成金質會員"
+ },
+ {
+  "id": "member-verification",
+  "q": "台北通要怎麼做實名認證"
+ },
+ {
+  "id": "member-profile",
+  "q": "我想改台北通的手機號碼"
+ },
+ {
+  "id": "member-profile",
+  "q": "我要刪除台北通帳號"
+ },
+ {
+  "id": "taipeipass-help",
+  "q": "台北通客服電話是多少"
+ },
+ {
+  "id": "taipeipass-help",
+  "q": "台北通可以做什麼"
+ },
+ {
+  "id": "easycard-link",
+  "q": "悠遊卡掉了要怎麼掛失"
+ },
+ {
+  "id": "easycard-link",
+  "q": "怎麼把悠遊卡綁在台北通"
+ },
+ {
+  "id": "virtual-cards",
+  "q": "我的數位卡證在哪裡看"
+ },
+ {
+  "id": "virtual-cards",
+  "q": "怎麼在手機上出示卡證"
+ },
+ {
+  "id": "student-card",
+  "q": "小孩的數位學生證怎麼開"
+ },
+ {
+  "id": "student-card",
+  "q": "學生卡可以放在手機裡嗎"
+ },
+ {
+  "id": "child-card",
+  "q": "小朋友搭車的優惠卡怎麼辦"
+ },
+ {
+  "id": "child-card",
+  "q": "兒童卡要去哪裡申請"
+ },
+ {
+  "id": "library-card",
+  "q": "我要辦借書證"
+ },
+ {
+  "id": "library-card",
+  "q": "圖書館的借閱證可以綁台北通嗎"
+ },
+ {
+  "id": "pregnancy-card",
+  "q": "懷孕搭計程車有補助嗎"
+ },
+ {
+  "id": "pregnancy-card",
+  "q": "孕婦證要怎麼申請"
+ },
+ {
+  "id": "welfare-cards",
+  "q": "低收入戶證明要去哪裡辦"
+ },
+ {
+  "id": "welfare-cards",
+  "q": "志工榮譽卡怎麼申請"
+ },
+ {
+  "id": "billing-overview",
+  "q": "台北通可以繳哪些帳單"
+ },
+ {
+  "id": "billing-overview",
+  "q": "我要繳費要怎麼付款"
+ },
+ {
+  "id": "parking-payment",
+  "q": "路邊停車費要怎麼繳"
+ },
+ {
+  "id": "parking-payment",
+  "q": "我收到停車單要去哪繳"
+ },
+ {
+  "id": "water-payment",
+  "q": "這個月水費怎麼繳"
+ },
+ {
+  "id": "water-payment",
+  "q": "我要查我家的水號"
+ },
+ {
+  "id": "school-payment",
+  "q": "小孩的學費可以用台北通繳嗎"
+ },
+ {
+  "id": "school-payment",
+  "q": "學校的註冊費怎麼繳"
+ },
+ {
+  "id": "tax-payment",
+  "q": "房屋稅要怎麼繳"
+ },
+ {
+  "id": "tax-payment",
+  "q": "我要繳地價稅"
+ },
+ {
+  "id": "medical-payment",
+  "q": "看醫生的費用可以線上繳嗎"
+ },
+ {
+  "id": "medical-payment",
+  "q": "聯合醫院的醫藥費怎麼付"
+ },
+ {
+  "id": "traffic-fines",
+  "q": "我收到交通罰單要怎麼繳"
+ },
+ {
+  "id": "traffic-fines",
+  "q": "闖紅燈的罰款可以分期嗎"
+ },
+ {
+  "id": "payment-history",
+  "q": "我要看之前繳過的費用"
+ },
+ {
+  "id": "payment-history",
+  "q": "停車費的收據在哪裡"
+ },
+ {
+  "id": "coupons",
+  "q": "我有什麼優惠券可以用"
+ },
+ {
+  "id": "coupons",
+  "q": "熊好券要怎麼領"
+ },
+ {
+  "id": "partner-offers",
+  "q": "用台北通有哪些店家有折扣"
+ },
+ {
+  "id": "partner-offers",
+  "q": "去運動中心有優惠嗎"
+ },
+ {
+  "id": "city-applications",
+  "q": "我申請的案件辦到哪裡了"
+ },
+ {
+  "id": "city-applications",
+  "q": "可以在網路上申辦市政服務嗎"
+ },
+ {
+  "id": "counter-queue",
+  "q": "區公所現在叫到幾號"
+ },
+ {
+  "id": "counter-queue",
+  "q": "我想線上取號"
+ },
+ {
+  "id": "disaster-report",
+  "q": "我家附近淹水了要通報"
+ },
+ {
+  "id": "disaster-report",
+  "q": "颱風路樹倒了要找誰"
+ },
+ {
+  "id": "police-service",
+  "q": "我東西掉了要去哪裡找"
+ },
+ {
+  "id": "police-service",
+  "q": "我要報案"
+ },
+ {
+  "id": "participation",
+  "q": "市政府的網路投票在哪裡"
+ },
+ {
+  "id": "participation",
+  "q": "我想提案給市政府"
+ },
+ {
+  "id": "welfare-estimate",
+  "q": "我可以領哪些社會福利"
+ },
+ {
+  "id": "welfare-estimate",
+  "q": "育兒津貼要怎麼申請"
+ },
+ {
+  "id": "city-learning",
+  "q": "台北e大的線上課程在哪裡上"
+ },
+ {
+  "id": "city-learning",
+  "q": "有沒有免費的線上學習課程"
+ },
+ {
+  "id": "neighborhood",
+  "q": "我要找我們這裡的里長"
+ },
+ {
+  "id": "neighborhood",
+  "q": "里辦公處的電話是多少"
+ },
+ {
+  "id": "library",
+  "q": "我借的書要怎麼續借"
+ },
+ {
+  "id": "library",
+  "q": "圖書館有沒有這本書"
+ },
+ {
+  "id": "hospital",
+  "q": "我要掛聯合醫院的門診"
+ },
+ {
+  "id": "hospital",
+  "q": "看診看到幾號了"
+ },
+ {
+  "id": "vaccination",
+  "q": "我想打流感疫苗要怎麼預約"
+ },
+ {
+  "id": "vaccination",
+  "q": "哪裡可以打疫苗"
+ },
+ {
+  "id": "water-service",
+  "q": "我家停水了要查原因"
+ },
+ {
+  "id": "water-service",
+  "q": "家裡的水好像怪怪的要找誰"
+ },
+ {
+  "id": "parent-child-centers",
+  "q": "附近有親子館嗎"
+ },
+ {
+  "id": "parent-child-centers",
+  "q": "親子館要怎麼預約"
+ },
+ {
+  "id": "zoo",
+  "q": "木柵動物園幾點開"
+ },
+ {
+  "id": "zoo",
+  "q": "我想帶小孩去動物園"
+ },
+ {
+  "id": "taipei-radio",
+  "q": "我想聽台北電台"
+ },
+ {
+  "id": "taipei-radio",
+  "q": "台北廣播電台在哪裡收聽"
+ },
+ {
+  "id": "essentials",
+  "q": "最近菜價多少"
+ },
+ {
+  "id": "essentials",
+  "q": "民生用品的價格在哪裡查"
+ },
+ {
+  "id": "subscriptions",
+  "q": "我要訂閱市政府的通知"
+ },
+ {
+  "id": "subscriptions",
+  "q": "怎麼關掉推播通知"
+ },
+ {
+  "id": "city-news",
+  "q": "台北最近有什麼活動"
+ },
+ {
+  "id": "city-news",
+  "q": "市政府有什麼新消息"
+ },
+ {
+  "id": "map-explore",
+  "q": "附近有什麼景點"
+ },
+ {
+  "id": "map-explore",
+  "q": "我要找地點"
+ },
+ {
+  "id": "city-dashboard",
+  "q": "台北的城市數據在哪裡看"
+ },
+ {
+  "id": "city-dashboard",
+  "q": "市政資訊儀表板"
+ },
+ {
+  "id": "road-construction",
+  "q": "哪裡在修路"
+ },
+ {
+  "id": "road-construction",
+  "q": "這條路為什麼在施工"
+ },
+ {
+  "id": "trash-routes",
+  "q": "垃圾車幾點會來"
+ },
+ {
+  "id": "trash-routes",
+  "q": "大型家具要怎麼丟"
+ },
+ {
+  "id": "outdoors",
+  "q": "哪裡可以帶狗去散步"
+ },
+ {
+  "id": "outdoors",
+  "q": "台北有什麼好走的步道"
+ },
+ {
+  "id": "smoking-areas",
+  "q": "哪裡可以抽菸"
+ },
+ {
+  "id": "smoking-areas",
+  "q": "附近有吸菸區嗎"
+ },
+ {
+  "id": "youbike",
+  "q": "附近哪裡可以借YouBike"
+ },
+ {
+  "id": "youbike",
+  "q": "微笑單車站還有車嗎"
+ },
+ {
+  "id": "parking-locations",
+  "q": "附近哪裡有停車場"
+ },
+ {
+  "id": "parking-locations",
+  "q": "我要找身障停車位"
+ },
+ {
+  "id": "OUT_OF_SCOPE",
+  "q": "我要辦護照"
+ },
+ {
+  "id": "OUT_OF_SCOPE",
+  "q": "明天天氣如何"
+ },
+ {
+  "id": "OUT_OF_SCOPE",
+  "q": "推薦好吃的餐廳"
+ },
+ {
+  "id": "OUT_OF_SCOPE",
+  "q": "高鐵票怎麼買"
+ },
+ {
+  "id": "OUT_OF_SCOPE",
+  "q": "我要辦健保卡"
+ },
+ {
+  "id": "senior-card",
+  "q": "我爸爸今年65歲可以辦什麼搭車優惠"
+ },
+ {
+  "id": "disability-card",
+  "q": "我女兒是身障者搭公車有優惠卡嗎"
+ },
+ {
+  "id": "accessible-toilets",
+  "q": "哪邊有輪椅可以進去的廁所"
+ },
+ {
+  "id": "accessible-taxi",
+  "q": "復康巴士或無障礙計程車怎麼叫"
+ },
+ {
+  "id": "member-password",
+  "q": "台北通密碼打錯太多次"
+ },
+ {
+  "id": "member-login",
+  "q": "台北通一直登入失敗"
+ },
+ {
+  "id": "trash-routes",
+  "q": "今天晚上垃圾車會經過我家嗎"
+ },
+ {
+  "id": "road-report",
+  "q": "路上有個大洞很危險要反映"
+ },
+ {
+  "id": "youbike",
+  "q": "我想租腳踏車"
+ },
+ {
+  "id": "parking-locations",
+  "q": "醫院附近哪裡可以停車"
+ },
+ {
+  "id": "hospital",
+  "q": "我想預約看醫生"
+ },
+ {
+  "id": "vaccination",
+  "q": "老人家打肺炎鏈球菌疫苗"
+ },
+ {
+  "id": "water-payment",
+  "q": "自來水的帳單怎麼繳"
+ },
+ {
+  "id": "tax-payment",
+  "q": "牌照稅什麼時候要繳"
+ },
+ {
+  "id": "police-service",
+  "q": "我錢包不見了"
+ },
+ {
+  "id": "disaster-report",
+  "q": "樹倒在路上擋住了"
+ },
+ {
+  "id": "zoo",
+  "q": "動物園門票多少錢"
+ },
+ {
+  "id": "library",
+  "q": "我想借書"
+ },
+ {
+  "id": "OUT_OF_SCOPE",
+  "q": "幫我訂明天的高鐵"
+ },
+ {
+  "id": "OUT_OF_SCOPE",
+  "q": "今天股票漲了嗎"
+ }
+]
