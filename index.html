@@ -140,7 +140,7 @@ if(tp)tp.addEventListener('message',ev=>{let m;try{m=typeof ev.data==='string'?J
   if(!m||m.name!=='llm'||!m.data)return;const d=m.data;
   if(d.event==='status')gemma.available=!!d.ready;
   // 模型載入後先用系統提示跑一次短句，讓服務清單的計算結果留在快取，之後每句只需處理使用者的話
-  if(d.event==='loaded')gemmaReady().then(ok=>{if(ok)llmGenerate(gemmaPrompt(),'你好',600000).then(r=>console.log('[Gemma] warm-up',r.ms,'ms')).catch(()=>{})});
+  if(d.event==='loaded')gemmaReady().then(ok=>{if(ok)llmGenerate(gemmaPrompt(),'你好',600000).then(r=>{gemma.warm=true;console.log('[Gemma] warm-up',r.ms,'ms')}).catch(()=>{})});
   if((d.event==='result'||d.event==='error')&&d.id!=null&&gemma.pending.has(d.id)){const p=gemma.pending.get(d.id);gemma.pending.delete(d.id);d.event==='result'?p.resolve(d):p.reject(Object.assign(Error(d.message||d.code),{code:d.code}));}
   if(d.event==='error'&&d.code==='model_missing')gemma.available=false;
 });
@@ -155,7 +155,8 @@ function llmGenerate(system,prompt,timeoutMs=45000){
   });
 }
 async function gemmaReady(){
-  if(!tp||!state.useAPI||!window.TownPassGemmaParser||gemma.available===false)return false;
+  // 預熱完成前不使用 Gemma：載入＋預熱要數分鐘，不能讓使用者乾等，直接用規則式結果（含 1999）
+  if(!tp||!state.useAPI||!window.TownPassGemmaParser||gemma.available===false||(gemma.parser&&!gemma.warm))return false;
   if(!gemma.parser){
     const res=await fetch(location.origin+'/api/v1/services');if(!res.ok)return false;
     gemma.services=await res.json();gemma.parser=TownPassGemmaParser.createParser(gemma.services);

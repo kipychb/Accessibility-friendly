@@ -59,7 +59,7 @@
 
 ## 待辦（依優先順序）
 1. ~~307 路線解析~~ ✅、補問可直接說終點名稱 ✅、補問朗讀完自動收音 ✅ → **模擬器實測**（例：「307公車西門站還有多久到」→ 說「撫遠街」）
-2. ~~服務範圍外提供 1999 一鍵撥號~~ ✅（`index.html` 用 TownPass 內建 `phone_call` Handler）→ 待模擬器實測
+2. ~~服務範圍外提供 1999 一鍵撥號~~ ✅（`index.html` 用 TownPass 內建 `phone_call` Handler）→ 模擬器實測 ✅（打字 passport application → 1999 按鈕 → 撥號程式開啟）
 3. 中文系統性測試：55 項服務各 2–3 種自然問法，修規則或別名（例：「身心障礙證明」對不到 disability-card）
 4. 離線模式開關（強制 Whisper），因無法向主辦方確認 Google 語音是否合規
 5. 英文問題用英文回答（Gemma 在裝置上翻譯後端答案、英文 TTS）
@@ -67,6 +67,7 @@
 7. 實體手機測試
 
 ## 注意事項
+- **Gemma 預熱期間（開頁後約 2.5–5 分鐘）CPU 滿載，語音辨識容易失敗**；預熱完成前不會使用 Gemma。展示前先開頁等待
 - 模擬器若卡在黑畫面：強制關閉 qemu 後用 `-no-snapshot-load` 冷開機（捷徑檔已內建）；之後要重做 `adb reverse`
 - **前端更新後，TownPass 裡的語音助理頁不會自動重新載入**：要 `adb shell am force-stop com.example.townpass` 再重開
 - 不要 commit `node_modules`、`dist`、`target`（已有 `.gitignore`；`townpass-assistant/target/` 仍被追蹤，未處理）
