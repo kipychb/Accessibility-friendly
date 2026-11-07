@@ -144,7 +144,8 @@ class AssistantController {
             }
             String stopName = matchedName;
             boolean sameStop = sameRoute && context.stop() != null && stopName.equals(normalize(context.stop()));
-            Integer direction = direction(text, routes);
+            // 已在補問方向（同路線、同站牌）時，接受只說終點名稱
+            Integer direction = direction(text, routes, sameStop);
             if (direction == null && sameStop) {
                 direction = context.direction();
             }
@@ -208,11 +209,16 @@ class AssistantController {
         return List.of(name, noParen, noMetro).stream().distinct().toList();
     }
 
-    private static Integer direction(String text, List<BusFeed.Route> routes) {
+    /**
+     * 判斷方向。一般句子要「往＋終點」才算；補問方向時（[answeringDirection]）
+     * 使用者常只說終點名稱（例：「撫遠街」），也接受不加「往」。
+     */
+    private static Integer direction(String text, List<BusFeed.Route> routes, boolean answeringDirection) {
+        String prefix = answeringDirection ? "" : "往";
         boolean outbound = text.contains("去程") || routes.stream().anyMatch(route ->
-                !route.destination().isBlank() && text.contains("往" + normalize(route.destination())));
+                !route.destination().isBlank() && text.contains(prefix + normalize(route.destination())));
         boolean inbound = text.contains("返程") || routes.stream().anyMatch(route ->
-                !route.departure().isBlank() && text.contains("往" + normalize(route.departure())));
+                !route.departure().isBlank() && text.contains(prefix + normalize(route.departure())));
         return outbound == inbound ? null : outbound ? 0 : 1;
     }
 

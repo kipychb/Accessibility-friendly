@@ -128,6 +128,10 @@ class AssistantApiTest {
                         .content("{\"text\":\"往萬華\",\"context\":{\"route\":\"1\",\"stop\":\"測試站\"}}"))
                 .andExpect(jsonPath("$.arrivals[0].status").value("NO_SERVICE"))
                 .andExpect(jsonPath("$.arrivals[0].estimateSeconds").doesNotExist());
+        // 補問方向時只說終點名稱（不加「往」）也要能回答
+        mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"萬華\",\"context\":{\"route\":\"1\",\"stop\":\"測試站\"}}"))
+                .andExpect(jsonPath("$.arrivals[0].status").value("NO_SERVICE"));
     }
 
     @Test

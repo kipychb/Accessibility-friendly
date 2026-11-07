@@ -122,6 +122,10 @@ function onNativeVoice(d){
       {const draft=state.transcript;cancelRecognition();state.screen='chat';render();input.value=draft;toast(d.message||'語音辨識發生問題，請改用文字輸入');}
       break;
     case 'voiceStatus':{const sub=document.querySelector('.listen-surface .home-sub');if(sub)sub.textContent=d.message;else toast(d.message);break;}
+    case 'speakingCompleted':
+      if(state.awaitAnswer&&!state.listening&&state.screen==='chat'){state.awaitAnswer=false;startListening();}
+      break;
+    case 'speakingStopped':state.awaitAnswer=false;break;
     case 'listeningStopped':{const t=document.querySelector('.listen-surface .home-title');if(t&&state.listening)t.textContent='辨識中…';break;}
   }
 }
@@ -248,6 +252,7 @@ function stopAudioMeter(){
 }
 function startListening(){
   if(state.listening)return;
+  state.awaitAnswer=false;
   state.originalScreen=state.screen;
   state.screen='listening';state.listening=true;
   state.stopRequested=false;state.recognitionError=false;
@@ -356,6 +361,8 @@ async function send(text){
      const service=result.service||{},url=service.officialUrl||'';
      let answer=result.speech||'目前沒有可提供的答案。';
      if(result.draft)answer+='\n\n陳情內容：'+result.draft.description+'\n地點：'+result.draft.location+'\n尚未正式送件。';
+     // 補問（例如問方向、站牌、地點）朗讀完後自動開始聽，使用者不用再按麥克風
+     state.awaitAnswer=result.type==='CLARIFY';
      addAI(answer,{url:/^https:\/\//.test(url)?url:'',cta:'前往官方服務',edit:!!result.draft,choices:Array.isArray(result.choices)?result.choices:[]});
      return;
    }catch(err){addAI('後端查詢失敗（'+err.message+'）。請確認 Spring Boot 已啟動及 API 網址，沒有改用假資料。');return;}
