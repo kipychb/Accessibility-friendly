@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
@@ -80,10 +80,7 @@ class VoiceBridge {
   Future<bool> _ensureSpeech() async {
     if (_speechReady) return true;
     // 只初始化一次；重複 initialize 會讓 Android 語音服務斷線（error_server_disconnected）。
-    _speechReady = await _speech.initialize(
-      onStatus: _onStatus,
-      onError: _onError,
-    );
+    _speechReady = await _speech.initialize(onStatus: _onStatus, onError: _onError);
     return _speechReady;
   }
 
@@ -132,13 +129,13 @@ class VoiceBridge {
   }
 
   static String _errorMessage(String code) => switch (code) {
-        'error_speech_timeout' || 'error_no_match' => '沒有聽清楚，請再按一次麥克風說話',
-        'error_network' || 'error_network_timeout' || 'error_server' => '語音服務需要網路，請確認連線後再試',
-        'error_permission' || 'error_insufficient_permissions' => '尚未允許麥克風權限，請到設定開啟',
-        'error_busy' || 'error_server_disconnected' => '語音服務忙碌中，請稍後再試',
-        'error_language_not_supported' || 'error_language_unavailable' => '此裝置的語音服務不支援中文辨識',
-        _ => '語音辨識發生問題，請改用文字輸入',
-      };
+    'error_speech_timeout' || 'error_no_match' => '沒有聽清楚，請再按一次麥克風說話',
+    'error_network' || 'error_network_timeout' || 'error_server' => '語音服務需要網路，請確認連線後再試',
+    'error_permission' || 'error_insufficient_permissions' => '尚未允許麥克風權限，請到設定開啟',
+    'error_busy' || 'error_server_disconnected' => '語音服務忙碌中，請稍後再試',
+    'error_language_not_supported' || 'error_language_unavailable' => '此裝置的語音服務不支援中文辨識',
+    _ => '語音辨識發生問題，請改用文字輸入',
+  };
 
   Future<void> startListening() async {
     if (_starting || _speech.isListening) return;
@@ -211,8 +208,45 @@ class VoiceBridge {
 
   /// 離開語音頁面時呼叫，避免背景繼續收音或朗讀。
   Future<void> stopAll() async {
+    debugPrint('VOICE_BRIDGE: stopAll');
     _finalSent = true;
     if (_speech.isListening) await _speech.cancel();
     await _tts.stop();
   }
+}
+
+/// 包住 WebView：頁面關閉（dispose）或 App 進入背景時停止收音與朗讀。
+class VoiceLifecycleGuard extends StatefulWidget {
+  const VoiceLifecycleGuard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<VoiceLifecycleGuard> createState() => _VoiceLifecycleGuardState();
+}
+
+class _VoiceLifecycleGuardState extends State<VoiceLifecycleGuard> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
+      VoiceBridge.instance.stopAll();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    VoiceBridge.instance.stopAll();
+    VoiceBridge.instance.emitter = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

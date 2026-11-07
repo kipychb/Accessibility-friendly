@@ -6,6 +6,15 @@
 - 「307公車還有多久到」辨識正確（dictation 模式；search 模式曾誤聽為「杉林溪」）。
 - 網頁先顯示字幕再 `speak()` → 原生朗讀，`speakingStarted`／`speakingCompleted` 回傳；朗讀後字幕保留，喇叭實際聽到聲音。
 
+## 第五階段測試（模擬器）
+| 情境 | 結果 |
+|---|---|
+| 拒絕麥克風權限 | ✅ 回傳 `permission_denied`，畫面顯示中文提示，App 不當機 |
+| 斷網：朗讀（TTS） | ✅ 可離線朗讀（Google TTS 本機 zh-TW 語音） |
+| 斷網：字幕 | ✅ 由網頁顯示，不需網路 |
+| 斷網：辨識（STT） | ⚠️ 失敗，回傳 `error_network`，顯示「語音服務需要網路」 |
+| 朗讀中關閉頁面 | ✅ `stopAll` 停止朗讀，不在背景繼續 |
+
 ## 架構
 - 部署：微服務網頁在 TownPass WebView；語音由 TownPass 自訂 Handler（name: `voice`）提供。
   Android WebView 不支援瀏覽器 SpeechRecognition，前端必須改用 `device-bridge/townpass-voice.js`。
@@ -22,8 +31,8 @@
 - 模擬器收音：Windows 麥克風須未靜音；模擬器以 `-allow-host-audio` 啟動（`voice_probe/start_voice_emulator.bat`）。
 
 ## 未完成
-- 一般模式辨識需連網（Google 線上辨識）；離線繁中語言包未安裝，斷網測試未做。
-- 麥克風權限拒絕測試、離開頁面時停止收音（stopAll 尚未接到 WebView dispose）。
+- 辨識需連網（Google 線上辨識）；離線繁中語言包未安裝。展示時須確保網路，或準備文字輸入備案。
+- 實體 Android 手機測試（目前只有模擬器）。
 - 前端兩套原型尚未改用 townpass-voice.js；正式網址需以 `--dart-define=VOICE_ASSISTANT_URL=` 指定。
 - 待主辦方確認：Android 系統 Google 語音服務是否視為商用第三方模組。
 - TownPass 修改尚未 commit／推送到團隊可取得的位置。
