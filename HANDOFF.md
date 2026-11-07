@@ -67,6 +67,7 @@
 7. 實體手機測試
 
 ## 注意事項
+- 模擬器若卡在黑畫面：強制關閉 qemu 後用 `-no-snapshot-load` 冷開機（捷徑檔已內建）；之後要重做 `adb reverse`
 - **前端更新後，TownPass 裡的語音助理頁不會自動重新載入**：要 `adb shell am force-stop com.example.townpass` 再重開
 - 不要 commit `node_modules`、`dist`、`target`（已有 `.gitignore`；`townpass-assistant/target/` 仍被追蹤，未處理）
 - `run-as` 讀不到 `/sdcard`，放檔要用 `adb exec-in ... cat >`

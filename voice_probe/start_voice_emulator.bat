@@ -7,6 +7,7 @@ if not exist "%EMU%" (
   pause
   exit /b 1
 )
-start "" "%EMU%" -avd Pixel_8 -allow-host-audio
+REM -no-snapshot-load: always cold boot; a broken quick-boot snapshot can leave a black screen.
+start "" "%EMU%" -avd Pixel_8 -allow-host-audio -no-snapshot-load
 echo Emulator is starting. Wait 30-60 seconds.
 timeout /t 5 >nul
