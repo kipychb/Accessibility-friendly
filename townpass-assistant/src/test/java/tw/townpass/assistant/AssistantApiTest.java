@@ -39,6 +39,8 @@ class AssistantApiTest {
     @DynamicPropertySource
     static void settings(DynamicPropertyRegistry registry) {
         registry.add("assistant.bus.base-url", () -> "http://127.0.0.1:" + feedServer.getAddress().getPort() + "/");
+        // 公車不在台北通範圍內（預設關閉）；這裡開啟只為了繼續測試公車程式本身，實際範圍見 ScopeTest
+        registry.add("assistant.extensions", () -> "bus-arrivals");
     }
 
     @AfterAll
@@ -49,7 +51,7 @@ class AssistantApiTest {
     @Test
     void listsSeededOfficialServices() throws Exception {
         mvc.perform(get("/api/v1/services"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(55))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(52)) // 51 項台北通服務 + 測試開啟的公車
                 .andExpect(jsonPath("$[*].category").value(hasItems(
                         "會員", "卡證", "帳務", "優惠", "市政服務", "訊息", "地圖與生活", "交通")))
                 .andExpect(jsonPath("$[?(@.id == 'bus-arrivals')].mode").value(hasItems("LIVE")));
@@ -58,7 +60,7 @@ class AssistantApiTest {
     @Test
     void routesEveryGuideByItsCatalogAlias() throws Exception {
         for (ServiceEntry entry : catalog.listWithAliases()) {
-            if (entry.mode.equals("GUIDE") && !entry.id.equals("road-report")) {
+            if (entry.mode.equals("GUIDE") && !entry.id.equals("road-report") && entry.inTaipeiPass) {
                 assertGuide("我想問" + entry.aliases.get(0), entry.id);
             }
         }
@@ -71,7 +73,7 @@ class AssistantApiTest {
         assertGuide("臺北通登入忘記密碼", "member-password");
         assertGuide("我要查 ＹｏｕＢｉｋｅ 還車位", "youbike");
         assertGuide("我要申辦台北通的新功能", "taipeipass-help");
-        assertGuide("附近垃圾車在哪裡", "trash-routes");
+        assertGuide("附近的公廁在哪裡", "accessible-toilets");
     }
 
     private void assertGuide(String question, String id) throws Exception {
@@ -109,10 +111,56 @@ class AssistantApiTest {
     }
 
     @Test
+    void extractsRouteFromEnglishQuestions() throws Exception {
+        // 英文問句不用等 Gemma：規則式抽出路線並補問站牌
+        for (String text : new String[] {"When will bus 1 arrive", "route 1 arrival time", "Is the 1 bus coming"}) {
+            mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"text\":\"" + text + "\"}"))
+                    .andExpect(jsonPath("$.context.route").value("1"))
+                    .andExpect(jsonPath("$.type").value("CLARIFY"));
+        }
+        mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"When will the bus arrive\"}"))
+                .andExpect(jsonPath("$.service.id").value("bus-arrivals"))
+                .andExpect(jsonPath("$.type").value("CLARIFY"));
+    }
+
+    @Test
+    void matchesEnglishKeywordsAsWholeWords() throws Exception {
+        assertGuide("Where can I apply for a senior card", "senior-card");
+        assertGuide("I lost my EasyCard", "easycard-link");
+        assertGuide("How do I get a library card", "library-card");
+        assertGuide("Where is the nearest public toilet", "accessible-toilets");
+        assertGuide("How do I pay my water bill?", "water-payment");
+        mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"passport application\"}"))
+                .andExpect(jsonPath("$.type").value("OUT_OF_SCOPE"));
+        // 英文陳情也要補問地點並保留描述，才能整理草稿
+        mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"I want to report a broken sidewalk\"}"))
+                .andExpect(jsonPath("$.type").value("CLARIFY"))
+                .andExpect(jsonPath("$.context.draft").value("I want to report a broken sidewalk"));
+    }
+
+    @Test
     void stopAliasesDropMetroPrefixAndParentheses() {
         org.junit.jupiter.api.Assertions.assertEquals(
                 java.util.List.of("捷運公館站(羅斯福)", "捷運公館站", "公館站"),
                 AssistantController.stopAliases("捷運公館站(羅斯福)"));
+    }
+
+    @Test
+    void matchesOfficialEnglishStopNames() throws Exception {
+        org.junit.jupiter.api.Assertions.assertEquals(
+                java.util.List.of("mrt ximen station", "mrt ximen", "ximen station", "ximen"),
+                AssistantController.stopAliasesEn("MRT Ximen Sta."));
+        for (String text : new String[] {"Taipei Main Station", "taipei train station", "Taipei Main Sta."}) {
+            mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"text\":\"" + text + "\",\"context\":{\"route\":\"1\"}}"))
+                    .andExpect(jsonPath("$.choices.length()").value(2))
+                    .andExpect(jsonPath("$.choices[0].labelEn").value(
+                            "Taipei Main Sta. (Zhongxiao), toward Songren Rd. (stop 10)"));
+        }
     }
 
     @Test
@@ -144,7 +192,7 @@ class AssistantApiTest {
                         .content("{\"text\":\"民生東路三段1號\",\"context\":{\"draft\":\"人行道破損\"}}"))
                 .andExpect(jsonPath("$.type").value("GUIDANCE"))
                 .andExpect(jsonPath("$.draft.location").value("民生東路三段1號"))
-                .andExpect(jsonPath("$.service.officialUrl").value("https://hello.gov.taipei/Front/main"));
+                .andExpect(jsonPath("$.service.officialUrl").value("https://1999.gov.taipei/Front/main"));
     }
 
     @Test
@@ -168,11 +216,12 @@ class AssistantApiTest {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             server.createContext("/GetRoute.gz", exchange -> writeGzip(exchange, """
-                    {"BusInfo":[{"Id":1,"nameZh":"1","departureZh":"萬華","destinationZh":"松仁路"}]}
+                    {"BusInfo":[{"Id":1,"nameZh":"1","departureZh":"萬華","destinationZh":"松仁路",
+                                 "departureEn":"Wanhua","destinationEn":"Songren Rd."}]}
                     """));
             server.createContext("/GetStop.gz", exchange -> writeGzip(exchange, """
-                    {"BusInfo":[{"Id":10,"routeId":1,"nameZh":"測試站","goBack":"0"},
-                                {"Id":11,"routeId":1,"nameZh":"測試站","goBack":"1"}]}
+                    {"BusInfo":[{"Id":10,"routeId":1,"nameZh":"測試站","goBack":"0","nameEn":"Taipei Main Sta. (Zhongxiao)"},
+                                {"Id":11,"routeId":1,"nameZh":"測試站","goBack":"1","nameEn":"Taipei Main Sta. (Zhongxiao)"}]}
                     """));
             server.createContext("/GetEstimateTime.gz", exchange -> writeGzip(exchange, """
                     {"EssentialInfo":{"UpdateTime":"%s"},"BusInfo":[

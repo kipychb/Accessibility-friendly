@@ -28,4 +28,9 @@ public class ServiceEntry {
     public String scopeEvidenceUrl;
     @Column(length = 1024)
     public String summary;
+    /** 是否為台北通（正式版或比賽版 TownPass）實際提供的服務；false 的項目一律回答「台北通沒有提供」。 */
+    public boolean inTaipeiPass = true;
+    /** inTaipeiPass 為 false 的原因（依官方資料查證的結果）。 */
+    @Column(length = 1024)
+    public String scopeNote;
 }

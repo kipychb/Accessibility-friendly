@@ -1,10 +1,10 @@
 [
  {
-  "id": "bus-arrivals",
+  "id": "OUT_OF_SCOPE", "was": "bus-arrivals",
   "q": "我要搭公車，307公車還有多久會來"
  },
  {
-  "id": "bus-arrivals",
+  "id": "OUT_OF_SCOPE", "was": "bus-arrivals",
   "q": "幫我看一號公車到哪裡了"
  },
  {
@@ -40,11 +40,11 @@
   "q": "我坐輪椅想找可以用的廁所"
  },
  {
-  "id": "accessible-taxi",
+  "id": "OUT_OF_SCOPE", "was": "accessible-taxi",
   "q": "坐輪椅要怎麼叫計程車"
  },
  {
-  "id": "accessible-taxi",
+  "id": "OUT_OF_SCOPE", "was": "accessible-taxi",
   "q": "我要叫可以上輪椅的車"
  },
  {
@@ -280,11 +280,11 @@
   "q": "育兒津貼要怎麼申請"
  },
  {
-  "id": "city-learning",
+  "id": "OUT_OF_SCOPE", "was": "city-learning",
   "q": "台北e大的線上課程在哪裡上"
  },
  {
-  "id": "city-learning",
+  "id": "OUT_OF_SCOPE", "was": "city-learning",
   "q": "有沒有免費的線上學習課程"
  },
  {
@@ -392,11 +392,11 @@
   "q": "市政資訊儀表板"
  },
  {
-  "id": "road-construction",
+  "id": "OUT_OF_SCOPE", "was": "road-construction",
   "q": "哪裡在修路"
  },
  {
-  "id": "road-construction",
+  "id": "OUT_OF_SCOPE", "was": "road-construction",
   "q": "這條路為什麼在施工"
  },
  {
@@ -472,7 +472,7 @@
   "q": "哪邊有輪椅可以進去的廁所"
  },
  {
-  "id": "accessible-taxi",
+  "id": "OUT_OF_SCOPE", "was": "accessible-taxi",
   "q": "復康巴士或無障礙計程車怎麼叫"
  },
  {

@@ -1,0 +1,410 @@
+{
+  "_note": "English keywords for rule-based matching (whole-word, case-insensitive). Written at development time; not AI. Kept separate from services.json so the Gemma prompt stays unchanged.",
+  "bus-arrivals": [
+    "bus arrival",
+    "bus arrivals",
+    "bus arrive",
+    "bus coming",
+    "bus schedule",
+    "bus time",
+    "next bus",
+    "when is the bus",
+    "when will the bus"
+  ],
+  "road-report": [
+    "report a problem",
+    "report a broken",
+    "broken sidewalk",
+    "damaged sidewalk",
+    "sidewalk",
+    "pothole",
+    "complaint",
+    "file a complaint",
+    "petition"
+  ],
+  "senior-card": [
+    "senior card",
+    "senior citizen card",
+    "senior pass",
+    "elderly card",
+    "senior easycard",
+    "card for seniors",
+    "card for the elderly"
+  ],
+  "disability-card": [
+    "love card",
+    "love companion card",
+    "disability card",
+    "disabled card",
+    "card for disabled",
+    "card for people with disabilities"
+  ],
+  "accessible-toilets": [
+    "accessible toilet",
+    "accessible toilets",
+    "accessible restroom",
+    "accessible restrooms",
+    "wheelchair toilet",
+    "public toilet",
+    "public toilets",
+    "restroom",
+    "restrooms",
+    "toilet",
+    "toilets",
+    "bathroom"
+  ],
+  "accessible-taxi": [
+    "accessible taxi",
+    "wheelchair taxi",
+    "accessible cab",
+    "wheelchair accessible taxi"
+  ],
+  "member-registration": [
+    "sign up",
+    "signup",
+    "register",
+    "registration",
+    "create an account",
+    "create account",
+    "new account"
+  ],
+  "member-login": [
+    "log in",
+    "login",
+    "sign in",
+    "signin"
+  ],
+  "member-password": [
+    "forgot password",
+    "forgot my password",
+    "reset password",
+    "reset my password",
+    "change password",
+    "account locked"
+  ],
+  "member-verification": [
+    "identity verification",
+    "verify my identity",
+    "verify identity",
+    "gold member",
+    "gold membership",
+    "real name verification"
+  ],
+  "member-profile": [
+    "profile",
+    "personal information",
+    "personal data",
+    "change my phone number",
+    "change my email",
+    "update my email"
+  ],
+  "taipeipass-help": [
+    "customer service",
+    "taipeipass help",
+    "how to use taipeipass",
+    "download the app",
+    "supported devices"
+  ],
+  "easycard-link": [
+    "link easycard",
+    "link my easycard",
+    "bind easycard",
+    "unlink easycard",
+    "lost easycard",
+    "lost my easycard"
+  ],
+  "virtual-cards": [
+    "virtual card",
+    "virtual cards",
+    "digital card",
+    "digital cards",
+    "my cards",
+    "card section"
+  ],
+  "student-card": [
+    "student card",
+    "student id",
+    "student easycard"
+  ],
+  "child-card": [
+    "child card",
+    "child discount card",
+    "children card",
+    "kids card",
+    "card for children"
+  ],
+  "library-card": [
+    "library card"
+  ],
+  "pregnancy-card": [
+    "pregnancy card",
+    "pregnant",
+    "pregnancy taxi",
+    "maternity"
+  ],
+  "welfare-cards": [
+    "low income card",
+    "low-income card",
+    "low income household",
+    "volunteer card",
+    "volunteer honor card"
+  ],
+  "billing-overview": [
+    "pay bills",
+    "pay a bill",
+    "pay my bill",
+    "my bills",
+    "bills",
+    "payment methods",
+    "smart payment"
+  ],
+  "parking-payment": [
+    "parking fee",
+    "parking fees",
+    "parking bill",
+    "pay for parking",
+    "parking ticket"
+  ],
+  "water-payment": [
+    "water bill",
+    "water bills",
+    "water fee"
+  ],
+  "school-payment": [
+    "tuition",
+    "school fee",
+    "school fees"
+  ],
+  "tax-payment": [
+    "house tax",
+    "land tax",
+    "license tax",
+    "local tax",
+    "local taxes",
+    "pay tax",
+    "pay taxes",
+    "property tax"
+  ],
+  "medical-payment": [
+    "medical bill",
+    "medical bills",
+    "hospital bill",
+    "medical fee",
+    "taipei city hospital bill",
+    "hospital fees"
+  ],
+  "traffic-fines": [
+    "traffic fine",
+    "traffic fines",
+    "traffic ticket",
+    "speeding ticket",
+    "overdue traffic fine",
+    "overdue traffic fines",
+    "overdue fine",
+    "overdue fines"
+  ],
+  "payment-history": [
+    "payment history",
+    "payment record",
+    "payment records",
+    "receipt",
+    "receipts"
+  ],
+  "coupons": [
+    "coupon",
+    "coupons",
+    "voucher",
+    "vouchers"
+  ],
+  "partner-offers": [
+    "partner stores",
+    "partner shops",
+    "store discount",
+    "store discounts",
+    "merchant discount",
+    "discount",
+    "discounts",
+    "offers"
+  ],
+  "city-applications": [
+    "apply online",
+    "online application",
+    "online applications",
+    "city applications",
+    "government application"
+  ],
+  "counter-queue": [
+    "queue number",
+    "queue",
+    "waiting number",
+    "counter number",
+    "take a number"
+  ],
+  "disaster-report": [
+    "disaster report",
+    "report a disaster",
+    "flooding",
+    "flood",
+    "fallen tree"
+  ],
+  "police-service": [
+    "police",
+    "report a crime",
+    "lost and found",
+    "lost item",
+    "lost property"
+  ],
+  "participation": [
+    "vote",
+    "voting",
+    "survey",
+    "surveys",
+    "participatory budget",
+    "citizen proposal"
+  ],
+  "welfare-estimate": [
+    "welfare",
+    "social welfare",
+    "welfare eligibility",
+    "benefits calculator",
+    "subsidy",
+    "subsidies"
+  ],
+  "city-learning": [
+    "online course",
+    "online courses",
+    "online learning",
+    "e-learning",
+    "elearning"
+  ],
+  "neighborhood": [
+    "neighborhood office",
+    "village chief",
+    "borough chief",
+    "neighborhood chief",
+    "village office"
+  ],
+  "library": [
+    "library",
+    "libraries",
+    "borrow books",
+    "borrow a book",
+    "reserve a book",
+    "book reservation"
+  ],
+  "hospital": [
+    "hospital appointment",
+    "doctor appointment",
+    "see a doctor",
+    "clinic appointment",
+    "hospital registration",
+    "make an appointment"
+  ],
+  "vaccination": [
+    "vaccine",
+    "vaccines",
+    "vaccination",
+    "flu shot",
+    "covid shot"
+  ],
+  "water-service": [
+    "water outage",
+    "water cut",
+    "water supply",
+    "water quality"
+  ],
+  "parent-child-centers": [
+    "parent child center",
+    "parent-child center",
+    "parent child centre",
+    "kids center",
+    "children's center"
+  ],
+  "zoo": [
+    "zoo",
+    "taipei zoo"
+  ],
+  "taipei-radio": [
+    "radio",
+    "taipei radio",
+    "radio station"
+  ],
+  "essentials": [
+    "prices",
+    "vegetable prices",
+    "food prices",
+    "daily necessities",
+    "groceries"
+  ],
+  "subscriptions": [
+    "subscribe",
+    "subscription",
+    "notifications",
+    "push notifications"
+  ],
+  "city-news": [
+    "city news",
+    "news",
+    "announcements",
+    "events"
+  ],
+  "map-explore": [
+    "explore taipei",
+    "tourist spots",
+    "attractions",
+    "places to visit",
+    "things to do",
+    "nearby places"
+  ],
+  "city-dashboard": [
+    "city dashboard",
+    "dashboard",
+    "city data"
+  ],
+  "road-construction": [
+    "road construction",
+    "road work",
+    "roadwork",
+    "roadworks",
+    "construction"
+  ],
+  "trash-routes": [
+    "garbage truck",
+    "garbage trucks",
+    "trash truck",
+    "trash collection",
+    "garbage collection",
+    "recycling truck",
+    "throw away trash"
+  ],
+  "outdoors": [
+    "dog park",
+    "pet park",
+    "walk my dog",
+    "forest",
+    "hiking"
+  ],
+  "smoking-areas": [
+    "smoking area",
+    "smoking areas",
+    "where can i smoke",
+    "smoke"
+  ],
+  "youbike": [
+    "youbike",
+    "bike rental",
+    "rent a bike",
+    "shared bike",
+    "public bike"
+  ],
+  "parking-locations": [
+    "parking lot",
+    "parking lots",
+    "parking space",
+    "parking spaces",
+    "car park",
+    "where to park",
+    "disabled parking",
+    "accessible parking"
+  ]
+}

@@ -1,5 +1,25 @@
 # 官方服務資料與範圍
 
+## 範圍原則（2026-11-08 決定）
+
+**只回答台北通有的服務。** 「台北通」指正式版台北通（有 id.taipei／市府官方說明佐證）與比賽提供的 TownPass 簡易版
+（`lib/page/city_service/model/my_service_model.dart` 的服務清單、「找地點」的微笑單車／停車場／公廁）。
+台北通沒有的服務在 `services.json` 標記 `"inTaipeiPass": false` 並寫明 `scopeNote`：
+不列在 `/api/v1/services`（Gemma 也不會選到），問到時回答「台北通目前沒有提供『…』這項服務」並提供 1999 撥號。
+
+| 停用的服務 | 原因 |
+|---|---|
+| 大臺北公車到站 `bus-arrivals` | 台北通與 TownPass 都沒有公車到站功能；原本是額外延伸（資料來自公運處開放資料）。程式保留，可用 `assistant.extensions=bus-arrivals` 重新開啟 |
+| 無障礙計程車 `accessible-taxi` | 找不到台北通提供叫車的官方說明 |
+| 道路施工 `road-construction` | 團隊在台北通 App 內確認沒有（2026-11-08） |
+| 臺北e大 `city-learning` | 台北通只提供在臺北e大用台北通帳號登入，不是台北通內的服務（團隊確認，2026-11-08） |
+
+2026-11-08 團隊在台北通 App 內確認**有**、已重新開啟：垃圾車 `trash-routes`、交通過期罰鍰 `traffic-fines`
+（App「帳單」的項目名稱是「交通過期罰鍰」）、聯合醫院醫療費 `medical-payment`（「帳單」項目）、市政新聞 `city-news`（首頁區塊，簡易版按鈕無實際內容）。
+
+日後確認某項台北通有提供時，把該項 `inTaipeiPass` 改回 `true`（或刪除該欄位）並補上 `scopeEvidenceUrl` 即可。
+下方表格為原始資料來源紀錄，其中公車與無障礙計程車目前已停用。
+
 來源核對日期為 2026-11-07。每筆服務的機關、官方入口及範圍依據在 [服務資料清單](../src/main/resources/services.json)，啟動時載入 `official_services`。
 
 | 主題 | 做得到的事 | 官方來源 |

@@ -43,7 +43,7 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
   padding: 8px 15px;
   border-bottom: 1px solid #eef4f5;
@@ -79,20 +79,24 @@ button:not(:disabled):active, .service-card a:active {
 /* V2：錄音音量驅動圓形大小；降級時維持原本的呼吸動畫 */
 .mic-button.audio-reactive{transform:scale(var(--sound-scale,1));box-shadow:0 0 0 6px #e3f5f7,0 0 0 var(--sound-halo,13px) rgba(11,147,158,.19),0 8px 21px rgba(12,94,110,.16);animation:none;will-change:transform,box-shadow;transition:transform .075s linear,box-shadow .075s linear;}
 @media(prefers-reduced-motion:reduce){.mic-button.audio-reactive{transition:none}}
+/* 說話時的波紋：兩圈外環隨音量（--level 0–1）放大、變明顯，像通話／錄音時的音量波動 */
+.mic-wrap{position:relative;display:grid;place-items:center;--level:0;margin:16px auto 20px}
+.listen-surface .mic-wrap .mic-button{position:relative;z-index:1;margin:0}
+.mic-wrap .ripple{position:absolute;inset:0;margin:auto;width:100%;height:100%;border-radius:50%;pointer-events:none;border:3px solid rgba(11,147,158,.55);transition:transform .12s ease-out,opacity .12s ease-out}
+.mic-wrap .r1{transform:scale(calc(1.08 + var(--level)*.45));opacity:calc(.15 + var(--level)*.75)}
+.mic-wrap .r2{transform:scale(calc(1.16 + var(--level)*.85));opacity:calc(.08 + var(--level)*.5);border-width:2px}
+@media(prefers-reduced-motion:reduce){.mic-wrap .ripple{transition:none}}
 </style>
 </head>
 <body>
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"><symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 10.5v1a6.5 6.5 0 0 0 13 0v-1M12 18v4m-4 0h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol><symbol id="i-wave" viewBox="0 0 48 48"><path d="M7 20v8M14 12v24M21 18v12M28 7v34M35 17v14M42 21v6" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none"/></symbol><symbol id="i-back" viewBox="0 0 24 24"><path d="m14 5-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><path d="M10 2h4l.6 2.2 2 .9 2.1-1.1 2.8 2.8-1.1 2.1.9 2L23 11v4l-2.2.6-.9 2 1.1 2.1-2.8 2.8-2.1-1.1-2 .9L14 23h-4l-.6-2.2-2-.9-2.1 1.1-2.8-2.8 1.1-2.1-.9-2L1 15v-4l2.2-.6.9-2L3 6.3l2.8-2.8 2.1 1.1 2-.9z" transform="translate(1 0) scale(.9)" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.7 12 3l9 7.7v10.5h-7v-7H10v7H3z" fill="currentColor"/></symbol><symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-8 16-8 16 0"/></symbol><symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q5 4 0 8M19 5q8 7 0 14"/></symbol><symbol id="i-square" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></symbol><symbol id="i-external" viewBox="0 0 24 24"><path d="M13 4h7v7M20 4l-9 9M19 14v6H4V5h6"/></symbol><symbol id="i-send" viewBox="0 0 24 24"><path d="m3 11 17-8-7 18-2-8-8-2z"/></symbol><symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="5"/><path d="M12 3v4M9 12h.01M15 12h.01M9 16h6"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4.3 4.3l2.1 2.1m11.2 11.2 2.1 2.1M19.7 4.3l-2.1 2.1M6.4 17.6l-2.1 2.1"/></symbol></svg>
 <div class="shell">
 <header class="topbar">
-  <button id="backHome" class="home-button" type="button">
-    <svg width="18" height="18" aria-hidden="true"><use href="#i-home"/></svg>
-    回到首頁
-  </button>
+  <!-- 不放「回到首頁」：回台北通用 App 標題列右上角的 X；對話中直接按左下角麥克風再問 -->
   <button id="settingsBtn" class="round-icon" aria-label="設定"><svg width="23" height="23"><use href="#i-gear"/></svg></button>
 </header>
 <main id="main" class="main" aria-live="polite"></main>
-<div id="compose" class="compose hide"><button id="miniMic" class="voice-mini" aria-label="語音輸入"><svg width="24" height="24"><use href="#i-mic"/></svg></button><label class="sr-only" for="messageInput">輸入訊息</label><textarea id="messageInput" rows="1" maxlength="1500" placeholder="可慢慢輸入；按右側送出鍵才會查詢…"></textarea><button id="sendBtn" class="send" aria-label="傳送訊息"><svg width="22" height="22"><use href="#i-send"/></svg></button></div>
+<div id="compose" class="compose hide"><button id="miniMic" class="voice-mini" aria-label="語音輸入"><svg width="24" height="24"><use href="#i-mic"/></svg></button><label class="sr-only" for="messageInput">輸入訊息</label><textarea id="messageInput" rows="1" maxlength="1500" placeholder="在這裡輸入問題，按右側送出鍵查詢"></textarea><button id="sendBtn" class="send" aria-label="傳送訊息"><svg width="22" height="22"><use href="#i-send"/></svg></button></div>
 <div id="toast" class="toast hide" role="status"></div>
 </div>
 <script src="townpass-assistant/voice-gemma-55/src/gemma-parser.js"></script>
@@ -117,16 +121,20 @@ function onNativeVoice(d){
       state.transcript=String(d.text||'').trim();displayTranscript();
       if(d.isFinal)finishListening();
       break;
+    case 'soundLevel':if(state.listening)setMicLevel(Number(d.level)||0);break;
     case 'speechError':
-      if(!state.listening){if(/^tts|invalid_text/.test(d.code||''))toast(d.message||'無法播放語音，請查看文字回覆');return;}
-      {const draft=state.transcript;cancelRecognition();state.screen='chat';render();input.value=draft;toast(d.message||'語音辨識發生問題，請改用文字輸入');}
+      // 原生端訊息是中文；英文介面時改用英文說明
+      if(!state.listening){if(/^tts|invalid_text/.test(d.code||''))toast(isEn()?'Could not read the reply aloud. Please read the text on screen.':(d.message||'無法播放語音，請查看文字回覆'));return;}
+      {const draft=state.transcript;cancelRecognition();state.screen='chat';render();input.value=draft;
+        toast(isEn()?(d.code==='permission_denied'?'Microphone permission is off. Please allow it in Settings.':"I didn't catch that. Tap the microphone and try again, or type your question."):(d.message||'語音辨識發生問題，請改用文字輸入'));}
       break;
-    case 'voiceStatus':{const sub=document.querySelector('.listen-surface .home-sub');if(sub)sub.textContent=d.message;else toast(d.message);break;}
+    case 'voiceStatus':{const msg=isEn()?(d.engine==='whisper'?'Using on-device speech recognition. Please wait a few seconds after you finish.':'Recognizing…'):d.message;
+      const sub=document.querySelector('.listen-surface .home-sub');if(sub)sub.textContent=msg;else toast(msg);break;}
     case 'speakingCompleted':
       if(state.awaitAnswer&&!state.listening&&state.screen==='chat'){state.awaitAnswer=false;startListening();}
       break;
     case 'speakingStopped':state.awaitAnswer=false;break;
-    case 'listeningStopped':{const t=document.querySelector('.listen-surface .home-title');if(t&&state.listening)t.textContent='辨識中…';break;}
+    case 'listeningStopped':{const t=document.querySelector('.listen-surface .home-title');if(t&&state.listening)t.textContent=tr('辨識中…','Recognizing…');setMicLevel(0);break;}
   }
 }
 // 離線模式（設定頁）：語音辨識一律用裝置上的 Whisper，證明不依賴 Google；記在本機
@@ -147,7 +155,11 @@ function englishAnswer(r){
     if(r.context&&r.context.route&&!r.context.stop)return `Which stop for bus ${r.context.route}? Please say the stop name.`;
     if(r.context&&r.context.draft)return 'Please tell me the road name, address or a nearby landmark.';
     return 'Please tell me the bus route and the stop.';}
-  if(r.type==='OUT_OF_SCOPE')return "I couldn't find a matching TaipeiPASS service. You can ask about accounts, cards, city applications, bills, offers, transport or places.\n\nIf you need help, tap below to call the 1999 citizen hotline.";
+  if(r.type==='OUT_OF_SCOPE'){
+    // 後端以「台北通目前沒有提供」開頭時，表示問到的是台北通沒有的服務（例如公車到站）
+    const lead=/^台北通目前沒有提供/.test(r.speech||'')?"TaipeiPASS does not offer this service, so I can't answer it.":"I couldn't find a matching TaipeiPASS service. You can ask about accounts, cards, bills, offers, city services or places.";
+    return lead+"\n\nIf you need help, tap below to call the 1999 citizen hotline.";}
+  if(r.draft)return 'I have put your report together, but it has not been sent yet. Next, choose one: (1) tap "Open official service" to open the Taipei petition system, sign in as the page asks, and fill in the description and location below; or (2) call the 1999 citizen hotline and report it by phone.';
   if(r.type==='UPSTREAM_UNAVAILABLE')return 'Official bus data is not available right now. Please try again later or check the Taipei e-bus website.';
   if(r.type==='NO_RESULT')return 'No matching official data was found. Please check the route, stop or direction.';
   return (serviceEn&&r.service&&serviceEn[r.service.id])||r.speech;
@@ -236,20 +248,34 @@ async function gemmaQuery(text){
 function safe(text){return String(text??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function toast(text){$('toast').textContent=text;$('toast').classList.remove('hide');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hide'),3400)}
 function top(){compose.classList.toggle('hide',state.screen!=='chat');}
-function render(){top();if(state.screen==='home')home();if(state.screen==='listening')listening();if(state.screen==='chat')chat();if(state.screen==='services')services();if(state.screen==='mine')mine();if(state.screen==='settings')settings();}
-function home(){main.innerHTML=`<div class="hero"><div class="hero-content"><span class="avatar">${icon('i-sun',26)}</span>您好，想查什麼？</div></div><section class="home-surface"><button class="mic-button" id="bigMic" aria-label="按下開始語音輸入">${icon('i-mic',75)}</button><div class="home-title">點一下說話</div><div class="home-sub">再點一下停止，立即查詢結果</div><div class="examples"><div class="examples-title">你可以這樣說</div><div class="chip-list"><button class="chip" data-example="我要申訴道路問題">我要申訴道路問題</button><button class="chip" data-example="我要申請敬老卡">我要申請敬老卡</button><button class="chip" data-example="臺北通怎麼登入？">臺北通怎麼登入？</button></div><p class="tap-hint">目前預設為本機示範；設定可切換 Spring Boot 後端</p></div></section>`;$('bigMic').onclick=startListening;document.querySelectorAll('[data-example]').forEach(x=>x.onclick=()=>send(x.dataset.example));}
-function listening(){main.innerHTML=`<div class="hero listen-hero"><div class="live-heading"><span class="live-dot" aria-hidden="true"></span>語音輸入（即時轉文字）${state.offlineVoice?'・裝置端辨識':''}</div><div id="liveTranscript" class="transcript placeholder" role="status" aria-live="polite" aria-atomic="true">請開始說話，辨識的文字會顯示在這裡…</div><div class="transcript-count" id="transcriptCount">已辨識 0 字（支援 100 字以上）</div></div><section class="home-surface listen-surface"><button class="mic-button listening audio-reactive" id="stopMic" aria-label="點擊停止語音輸入">${icon('i-mic',75)}</button><div class="home-title">點擊停止</div><div class="home-sub">正在聆聽您的需求…</div><div class="listen-bottom"><p class="small-hint">語音辨識結果會同步顯示，點擊停止後直接查詢</p><button class="cancel-button" id="cancelListen">取消並返回</button></div></section>`;$('stopMic').onclick=stopListening;$('cancelListen').onclick=()=>{cancelRecognition();state.screen=state.originalScreen;render()};}
+// 介面語言跟著設定頁的「語音語言」：選 English 時整個介面改成英文（固定文字，開發階段撰寫，不是 AI 翻譯）
+function isEn(){return String(state.language).startsWith('en')}
+function tr(zh,en){return isEn()?en:zh}
+function applyLang(){document.documentElement.lang=tr('zh-Hant','en');
+  $('settingsBtn').setAttribute('aria-label',tr('設定','Settings'));$('miniMic').setAttribute('aria-label',tr('語音輸入','Voice input'));
+  document.querySelector('label[for="messageInput"]').textContent=tr('輸入訊息','Message');
+  input.placeholder=tr('在這裡輸入問題，按右側送出鍵查詢','Type your question here, then tap Send');$('sendBtn').setAttribute('aria-label',tr('傳送訊息','Send'));}
+function render(){applyLang();top();if(state.screen==='home')home();if(state.screen==='listening')listening();if(state.screen==='chat')chat();if(state.screen==='services')services();if(state.screen==='mine')mine();if(state.screen==='settings')settings();}
+// 首頁範例只放臺北通 App 本身就有的功能（卡證、悠遊卡綁定、優惠券；依 id.taipei/tpcd 功能介紹）
+const EXAMPLES={zh:['我的虛擬卡證在哪裡看？','怎麼綁定悠遊卡？','臺北通的優惠券在哪裡？'],en:['Where can I see my virtual cards?','How do I link my EasyCard?','Where are my coupons?']};
+function home(){const ex=EXAMPLES[isEn()?'en':'zh'];main.innerHTML=`<div class="hero"><div class="hero-content"><span class="avatar">${icon('i-sun',26)}</span>${tr('您好，想查什麼？','Hi, what would you like to know?')}</div></div><section class="home-surface"><button class="mic-button" id="bigMic" aria-label="${tr('按下開始語音輸入','Tap to start voice input')}">${icon('i-mic',75)}</button><div class="home-title">${tr('點一下說話','Tap to speak')}</div><div class="home-sub">${tr('再點一下停止，立即查詢結果','Tap again to stop and search')}</div><div class="examples"><div class="examples-title">${tr('你可以這樣說','You can say')}</div><div class="chip-list">${ex.map(t=>`<button class="chip" data-example="${safe(t)}">${safe(t)}</button>`).join('')}</div>${state.useAPI?'':`<p class="tap-hint">${tr('目前預設為本機示範；設定可切換 Spring Boot 後端','Demo mode; turn on the backend in Settings')}</p>`}</div></section>`;$('bigMic').onclick=startListening;document.querySelectorAll('[data-example]').forEach(x=>x.onclick=()=>send(x.dataset.example));}
+function listening(){main.innerHTML=`<div class="hero listen-hero"><div class="live-heading"><span class="live-dot" aria-hidden="true"></span>${tr('語音輸入（即時轉文字）','Voice input (live captions)')}${state.offlineVoice?tr('・裝置端辨識',' · on-device'):''}</div><div id="liveTranscript" class="transcript placeholder" role="status" aria-live="polite" aria-atomic="true">${tr('請開始說話，辨識的文字會顯示在這裡…','Start speaking. Your words will appear here…')}</div><div class="transcript-count" id="transcriptCount">${countText(0)}</div></div><section class="home-surface listen-surface"><div class="mic-wrap"><span class="ripple r1" aria-hidden="true"></span><span class="ripple r2" aria-hidden="true"></span><button class="mic-button listening audio-reactive" id="stopMic" aria-label="${tr('點擊停止語音輸入','Tap to stop voice input')}">${icon('i-mic',75)}</button></div><div class="home-title">${tr('點擊停止','Tap to stop')}</div><div class="home-sub">${tr('正在聆聽您的需求…','Listening…')}</div><div class="listen-bottom"><p class="small-hint">${tr('語音辨識結果會同步顯示，點擊停止後直接查詢','Captions update as you speak. Tap stop to search.')}</p><button class="cancel-button" id="cancelListen">${tr('取消並返回','Cancel')}</button></div></section>`;$('stopMic').onclick=stopListening;$('cancelListen').onclick=()=>{cancelRecognition();state.screen=state.originalScreen;render()};}
 // 長語音：單次辨識結果可能因瀏覽器停頓而結束，因此保留已確定的文字後重新啟動。
 // 沒有設定 25 字上限；100 字以上也可持續累積，直到使用者主動點擊停止。
+function countText(t){t=String(t||'');return isEn()?`${t.trim()?t.trim().split(/\s+/).length:0} words recognized`:`已辨識 ${[...t].length} 字（支援 100 字以上）`}
+// 收音音量（0–1）→ 麥克風按鈕縮放與外圈波紋；App 內來自原生 soundLevel 事件，瀏覽器內來自 Web Audio
+function setMicLevel(power){const mic=$('stopMic');if(!mic)return;const p=Math.max(0,Math.min(1,power));
+  mic.style.setProperty('--sound-scale',(1+p*.18).toFixed(3));mic.style.setProperty('--sound-halo',(13+p*30).toFixed(1)+'px');
+  const wrap=mic.parentElement;if(wrap&&wrap.classList.contains('mic-wrap'))wrap.style.setProperty('--level',p.toFixed(2));}
 function displayTranscript(){
   const el=$('liveTranscript');
   if(el){
-    el.textContent=state.transcript||'請開始說話，辨識的文字會顯示在這裡…';
+    el.textContent=state.transcript||tr('請開始說話，辨識的文字會顯示在這裡…','Start speaking. Your words will appear here…');
     el.classList.toggle('placeholder',!state.transcript);
     el.scrollTop=el.scrollHeight;
   }
   const counter=$('transcriptCount');
-  if(counter)counter.textContent=`已辨識 ${[...state.transcript].length} 字（支援 100 字以上）`;
+  if(counter)counter.textContent=countText(state.transcript);
 }
 // 麥克風音量視覺化：在使用者授權時用 Web Audio API 分析音量，驅動圓形光圈。
 async function startAudioMeter(){
@@ -268,8 +294,7 @@ async function startAudioMeter(){
       analyser.getByteTimeDomainData(bytes);
       let sum=0;for(const v of bytes){const a=(v-128)/128;sum+=a*a;}
       const rms=Math.sqrt(sum/bytes.length);
-      const mic=$('stopMic');
-      if(mic){const power=Math.min(1,rms*9);mic.style.setProperty('--sound-scale',String((1+power*.18).toFixed(3)));mic.style.setProperty('--sound-halo',String((13+power*30).toFixed(1))+'px');}
+      setMicLevel(rms*9);
       state.audioFrame=requestAnimationFrame(frame);
     }
     frame();
@@ -370,8 +395,12 @@ function stopListening(){
   if(r){try{r.stop()}catch(e){finishListening();}}
   else finishListening();
 }
-function bubble(entry,index){const user=entry.role==='user',head=user?'你（語音轉文字）':'臺北通 助理';let buttons='';if(!user){buttons=`${entry.call?`<div class="actions"><button class="primary" data-call="${safe(entry.call)}">📞 撥打 ${safe(entry.call)} 市民熱線</button></div>`:''}<div class="divider"></div><button class="speak-again" data-speak="${index}">${icon('i-volume',19)} 播放回覆</button>`}return `<div class="bubble ${user?'user':'ai'}"><div class="bubble-head"><span class="bubble-avatar ${user?'user-avatar':''}">${icon(user?'i-user':'i-bot',19)}</span>${head}</div><div class="bubble-text">${safe(entry.text)}</div>${entry.url&&/^https:\/\//.test(entry.url)?`<div class="actions"><button class="primary" data-open="${index}">${icon('i-external',17)} ${entry.cta||'前往官方服務'}</button>${entry.edit?'<button class="secondary" id="editDraft">修改內容</button>':''}</div>`:''}${entry.choices&&entry.choices.length&&index===state.conversation.length-1?`<div class="actions">${entry.choices.map((c,i)=>`<button class="secondary" data-choice="${index}:${i}">${safe(c.label)}</button>`).join('')}</div>`:''}${buttons}</div>`}
-function chat(){let messages=state.conversation.map(bubble).join('');main.innerHTML=`<div class="chat"><div class="chat-meta">以臺北通既有功能為服務範圍</div>${messages||'<div class="empty">您可以直接說出需求，或在下方輸入文字。</div>'}${state.complaint&&state.complaint.stage==='location'?'<div class="warning">請補充地點；尚未送出任何正式陳情。</div>':''}</div>`;main.querySelectorAll('[data-call]').forEach(btn=>btn.onclick=()=>{const num=btn.dataset.call;if(tp)tp.postMessage(JSON.stringify({name:'phone_call',data:num}));else location.href='tel:'+num;});main.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=()=>{const [e,i]=btn.dataset.choice.split(':').map(Number);const ch=state.conversation[e].choices[i];state.apiContext=ch.context;send(ch.label)});main.querySelectorAll('[data-speak]').forEach(btn=>btn.onclick=()=>speak(state.conversation[+btn.dataset.speak].text));main.querySelectorAll('[data-open]').forEach(btn=>btn.onclick=()=>{let e=state.conversation[+btn.dataset.open];(navigator.onLine===false?toast('目前沒有網路，請連線後再開啟官方服務'):window.open(e.url,'_blank','noopener,noreferrer'))});const edit=$('editDraft');if(edit)edit.onclick=()=>{state.complaint={stage:'detail',location:state.complaint?.location||'',description:state.complaint?.description||''};addAI('請說出需要修改的陳情內容，或直接在下方輸入。')};main.scrollTop=main.scrollHeight;}
+function bubble(entry,index){const user=entry.role==='user',head=user?tr('你（語音轉文字）','You'):tr('臺北通 助理','TaipeiPASS Assistant');let buttons='';if(!user){buttons=`${entry.call?`<div class="actions"><button class="primary" data-call="${safe(entry.call)}">📞 ${entry.en?`Call ${safe(entry.call)} citizen hotline`:`撥打 ${safe(entry.call)} 市民熱線`}</button></div>`:''}<div class="divider"></div><button class="speak-again" data-speak="${index}">${icon('i-volume',19)} ${entry.en?'Play reply':'播放回覆'}</button>`}return `<div class="bubble ${user?'user':'ai'}"><div class="bubble-head"><span class="bubble-avatar ${user?'user-avatar':''}">${icon(user?'i-user':'i-bot',19)}</span>${head}</div><div class="bubble-text">${safe(entry.text)}</div>${entry.url&&/^https:\/\//.test(entry.url)?`<div class="actions"><button class="primary" data-open="${index}">${icon('i-external',17)} ${entry.cta||'前往官方服務'}</button>${entry.edit?`<button class="secondary" id="editDraft">${entry.en?'Edit description':'修改內容'}</button>`:''}</div>`:''}${entry.choices&&entry.choices.length&&index===state.conversation.length-1?`<div class="actions">${entry.choices.map((c,i)=>`<button class="secondary" data-choice="${index}:${i}">${safe(entry.en&&c.labelEn?c.labelEn:c.label)}</button>`).join('')}</div>`:''}${buttons}</div>`}
+function chat(){let messages=state.conversation.map(bubble).join('');main.innerHTML=`<div class="chat"><div class="chat-meta">${tr('以臺北通既有功能為服務範圍','Covers existing TaipeiPASS services')}</div>${messages||`<div class="empty">${tr('您可以直接說出需求，或在下方輸入文字。','Say what you need, or type below.')}</div>`}${state.complaint&&state.complaint.stage==='location'?'<div class="warning">請補充地點；尚未送出任何正式陳情。</div>':''}</div>`;main.querySelectorAll('[data-call]').forEach(btn=>btn.onclick=()=>{const num=btn.dataset.call;if(tp)tp.postMessage(JSON.stringify({name:'phone_call',data:num}));else location.href='tel:'+num;});main.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=()=>{const [e,i]=btn.dataset.choice.split(':').map(Number);const en=state.conversation[e];const ch=en.choices[i];state.apiContext=ch.context;send(en.en&&ch.labelEn?ch.labelEn:ch.label)});main.querySelectorAll('[data-speak]').forEach(btn=>btn.onclick=()=>speak(state.conversation[+btn.dataset.speak].text));main.querySelectorAll('[data-open]').forEach(btn=>btn.onclick=()=>{let e=state.conversation[+btn.dataset.open];(navigator.onLine===false?toast(tr('目前沒有網路，請連線後再開啟官方服務','No internet connection. Please connect and try again.')):window.open(e.url,'_blank','noopener,noreferrer'))});const edit=$('editDraft');if(edit)edit.onclick=()=>{
+  // 後端模式：保留剛才的地點，下一句當作新的陳情內容，重新整理草稿（原本只有本機示範模式能改）
+  const last=[...state.conversation].reverse().find(e=>e.draft);
+  if(state.useAPI&&last){state.editDraft={location:last.draft.location};addAI(tr('請說出要改成的陳情內容，或直接在下方輸入。','Tell me the new description of the problem, or type it below.'),{en:isEn()});return;}
+  state.complaint={stage:'detail',location:state.complaint?.location||'',description:state.complaint?.description||''};addAI('請說出需要修改的陳情內容，或直接在下方輸入。')};main.scrollTop=main.scrollHeight;}
 function addAI(text,extra={}){state.conversation.push({role:'ai',text,...extra});if(state.screen!=='chat')return;render();if(state.autoSpeak)speak(text)}
 function speak(text){if(tp){tpSend('speak',{text:String(text||'').slice(0,1000),lang:state.answerLang==='en'?'en':'zh'});return}if(!('speechSynthesis'in window)){toast('此裝置不支援語音朗讀');return}try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.lang=state.language;u.rate=.92;u.pitch=1;let voices=speechSynthesis.getVoices();let match=voices.find(v=>v.lang.toLowerCase()===state.language.toLowerCase())||voices.find(v=>v.lang.startsWith('zh'));if(match)u.voice=match;speechSynthesis.speak(u)}catch(e){toast('無法播放語音，請查看文字回覆')}}
 async function send(text){
@@ -384,7 +413,9 @@ async function send(text){
      // 規則優先：先用原句查後端（約 1 秒）；只有後端聽不懂（OUT_OF_SCOPE），
      // 且不是補問中的後續回答時，才交給裝置端 Gemma 理解，再用它找出的服務重新查詢。
      const ask=async(q,ctx)=>{const r=await fetch(state.apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:q,context:ctx})});if(!r.ok)throw Error('HTTP '+r.status);return r.json();};
-     let result=await ask(text,state.apiContext);
+     let result;
+     if(state.editDraft){const loc=state.editDraft.location;state.editDraft=null;result=await ask(loc,{draft:text.slice(0,400)});}
+     else result=await ask(text,state.apiContext);
      if(result.type==='OUT_OF_SCOPE'&&!state.apiContext){
        const q=await gemmaQuery(text);
        if(q){const retry=await ask(q,null);if(retry.type!=='OUT_OF_SCOPE')result=retry;}
@@ -397,12 +428,13 @@ async function send(text){
      // 無法回答時提供官方聯絡方式與一鍵撥號（專案規格第 10 點）；走 TownPass 內建的 phone_call Handler
      const outOfScope=result.type==='OUT_OF_SCOPE';
      if(outOfScope&&!english)answer+='\n\n如果需要協助，可以按下方按鈕，直接撥打臺北市民當家熱線 1999。';
-     if(result.draft)answer+='\n\n陳情內容：'+result.draft.description+'\n地點：'+result.draft.location+'\n尚未正式送件。';
+     if(result.draft)answer+=english?'\n\nDescription: '+result.draft.description+'\nLocation: '+result.draft.location+'\nNot submitted yet.'
+       :'\n\n陳情內容：'+result.draft.description+'\n地點：'+result.draft.location+'\n尚未正式送件。';
      // 補問（例如問方向、站牌、地點）朗讀完後自動開始聽，使用者不用再按麥克風
      state.awaitAnswer=result.type==='CLARIFY';
-     addAI(answer,{url:/^https:\/\//.test(url)?url:'',cta:'前往官方服務',edit:!!result.draft,call:outOfScope?'1999':'',choices:Array.isArray(result.choices)?result.choices:[]});
+     addAI(answer,{url:/^https:\/\//.test(url)?url:'',cta:english?'Open official service':'前往官方服務',en:english,edit:!!result.draft,draft:result.draft||null,call:outOfScope||result.draft?'1999':'',choices:Array.isArray(result.choices)?result.choices:[]});
      return;
-   }catch(err){addAI('後端查詢失敗（'+err.message+'）。請確認 Spring Boot 已啟動及 API 網址，沒有改用假資料。');return;}
+   }catch(err){state.apiContext=null;addAI(tr('後端查詢失敗（'+err.message+'）。請確認 Spring Boot 已啟動及 API 網址，沒有改用假資料。','The search service is not responding ('+err.message+'). Please try again later.'),{en:isEn()});return;}
    finally{state.apiBusy=false;}
  }
  try{demo(text)}finally{state.apiBusy=false;}
@@ -412,22 +444,9 @@ if(/申訴|陳情|投訴|人行道|道路破損|路燈|違停|行道樹/.test(te
 let match=/敬老卡|愛心卡|卡證|數位證件|市民卡/.test(text)?data[2]:/登入|註冊|會員|帳號|密碼|忘記密碼|身分驗證/.test(text)?data[1]:/帳單|繳費|付款|繳費紀錄|停車費/.test(text)?data[3]:/優惠|優惠券|折價券|兌換/.test(text)?data[4]:null;if(match){addAI(`${match.description}\n\n這是臺北通既有功能的使用指引；如需操作，請前往官方入口。`,{url:match.url,cta:'前往官方入口'});return}addAI('抱歉，目前我只支援已收錄的臺北通功能，例如「有話要說／1999陳情」、「會員服務」、「數位卡證」、「帳單繳費」及「優惠」。您可以換一種說法再試一次。')}
 function services(){main.innerHTML=`<div class="settings"><h2>臺北通服務</h2><p class="note">以下是目前已收錄的功能指引。正式功能及操作方式以官方最新資訊為準。</p><div style="display:grid;gap:12px">${data.map(s=>`<article class="service-card"><b>${safe(s.name)}</b><p>${safe(s.description)}</p><a href="${s.url}" target="_blank" rel="noopener noreferrer">查看官方服務 ↗</a></article>`).join('')}</div></div>`}
 function mine(){main.innerHTML=`<div class="settings"><h2>我的</h2><div class="service-card"><b>語音助理示範模式</b><p>本原型不連接個人臺北通帳號、不讀取會員或卡證資料，也不會自動送出陳情。</p></div><button class="secondary" id="resetChat" style="width:100%;margin-top:18px">開始新對話</button></div>`;$('resetChat').onclick=()=>{state.conversation=[];state.complaint=null;state.session='tp-'+Math.random().toString(36).slice(2,10);state.screen='home';render();toast('已開始新對話')}}
-function settings(){main.innerHTML=`<div class="settings"><h2>語音助理設定</h2><label for="apiUrl">後端 API 網址</label><input id="apiUrl" type="url" placeholder="http://localhost:8080/api/ask" value="${safe(state.apiUrl)}"><div class="toggle-row"><label for="useAPI">啟用後端查詢</label><input id="useAPI" type="checkbox" ${state.useAPI?'checked':''}></div><div class="toggle-row"><label for="autoSpeak">自動朗讀系統回答</label><input id="autoSpeak" type="checkbox" ${state.autoSpeak?'checked':''}></div><div class="toggle-row"><label for="offlineVoice">語音辨識不使用 Google（裝置端辨識，較慢；查詢仍需網路）</label><input id="offlineVoice" type="checkbox" ${state.offlineVoice?'checked':''}></div><label for="lang">語音語言</label><select id="lang"><option value="zh-TW">國語（臺灣）</option><option value="en-US">English</option></select><p class="note">此設定適用於語音輸入和朗讀。選 English 時以英文回答；服務說明的英文版為開發階段預先翻譯，公車站名使用官方英文資料。</p><button id="saveSettings" class="primary">儲存設定</button></div>`;$('lang').value=state.language;$('saveSettings').onclick=()=>{let url=$('apiUrl').value.trim();if(url&&!/^https?:\/\//i.test(url)){toast('請輸入完整的 http 或 https 網址');return}state.apiUrl=url;state.useAPI=$('useAPI').checked;state.autoSpeak=$('autoSpeak').checked;state.offlineVoice=$('offlineVoice').checked;try{localStorage.setItem('offlineVoice',state.offlineVoice?'1':'0')}catch(e){}state.language=$('lang').value;state.screen='home';render();toast('設定已儲存（本次開啟期間）')}}
-async function goHome(){
-  cancelRecognition();
-  stopSpeak();
-  try {
-    const bridge = window.flutter_inappwebview;
-    if (bridge?.callHandler && await bridge.callHandler('townPassReturnHome') === true) return;
-  } catch {
-    // Keep the web interface usable without the native handler.
-  }
-  state.screen='home';
-  render();
-  main.scrollTop=0;
-}
+function settings(){main.innerHTML=`<div class="settings"><h2>${tr('語音助理設定','Assistant settings')}</h2><label for="apiUrl">${tr('後端 API 網址','Backend API URL')}</label><input id="apiUrl" type="url" placeholder="http://localhost:8080/api/ask" value="${safe(state.apiUrl)}"><div class="toggle-row"><label for="useAPI">${tr('啟用後端查詢','Use backend search')}</label><input id="useAPI" type="checkbox" ${state.useAPI?'checked':''}></div><div class="toggle-row"><label for="autoSpeak">${tr('自動朗讀系統回答','Read replies aloud')}</label><input id="autoSpeak" type="checkbox" ${state.autoSpeak?'checked':''}></div><div class="toggle-row"><label for="offlineVoice">${tr('語音辨識不使用 Google（裝置端辨識，較慢；查詢仍需網路）','On-device speech recognition, no Google (slower; searching still needs internet)')}</label><input id="offlineVoice" type="checkbox" ${state.offlineVoice?'checked':''}></div><label for="lang">${tr('語音語言','Language')}</label><select id="lang"><option value="zh-TW">國語（臺灣）</option><option value="en-US">English</option></select><p class="note">${tr('此設定適用於介面、語音輸入和朗讀。選 English 時以英文回答；服務說明的英文版為開發階段預先翻譯。','Applies to the screen, voice input and read-aloud. Service descriptions were translated in advance during development (not live AI).')}</p><button id="saveSettings" class="primary">${tr('儲存設定','Save')}</button></div>`;$('lang').value=state.language;$('saveSettings').onclick=()=>{let url=$('apiUrl').value.trim();if(url&&!/^https?:\/\//i.test(url)){toast(tr('請輸入完整的 http 或 https 網址','Please enter a full http or https URL'));return}state.apiUrl=url;state.useAPI=$('useAPI').checked;state.autoSpeak=$('autoSpeak').checked;state.offlineVoice=$('offlineVoice').checked;try{localStorage.setItem('offlineVoice',state.offlineVoice?'1':'0')}catch(e){}state.language=$('lang').value;state.screen='home';render();toast(tr('設定已儲存（本次開啟期間）','Settings saved (until you close this page)'))}}
 
-$('settingsBtn').onclick=()=>{cancelRecognition();state.screen='settings';render()};$('backHome').onclick=goHome;$('sendBtn').onclick=()=>send(input.value);$('miniMic').onclick=startListening;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send(input.value)}});render();
+$('settingsBtn').onclick=()=>{cancelRecognition();state.screen='settings';render()};$('sendBtn').onclick=()=>send(input.value);$('miniMic').onclick=startListening;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send(input.value)}});render();
 })();
 </script>
 </body></html>

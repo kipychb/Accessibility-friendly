@@ -1,7 +1,7 @@
 From 8ef262dc605ee81db9eef4c0b14491137b10c23c Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:19:50 +0800
-Subject: [PATCH 1/7] Add voice web message handler for Chinese STT/TTS
+Subject: [PATCH 1/8] Add voice web message handler for Chinese STT/TTS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -442,7 +442,7 @@ index 69f3c45..81c78a1 100644
 From f8ebeb1925c4d692fabada85c29c3d885f8b27f5 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:30:45 +0800
-Subject: [PATCH 2/7] Stop voice when leaving the WebView or app goes to
+Subject: [PATCH 2/8] Stop voice when leaving the WebView or app goes to
  background
 
 Wrap InAppWebView in VoiceLifecycleGuard, which calls
@@ -582,7 +582,7 @@ index 8f9d244..576b034 100644
 From c5eee2e4d3e2c5c1eaa9c362ba82809cae6edee0 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 21:26:58 +0800
-Subject: [PATCH 3/7] Hybrid speech recognition: Google online, Whisper offline
+Subject: [PATCH 3/8] Hybrid speech recognition: Google online, Whisper offline
 
 - online + system recognizer available: speech_to_text (Google), fast
 - offline or no Google service: record 16 kHz WAV, then transcribe on
@@ -1186,7 +1186,7 @@ index 81c78a1..0a77952 100644
 From 1ba66451cdc0e45f6e4d646f74ab55d14297eb9a Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 22:49:48 +0800
-Subject: [PATCH 4/7] Add on-device LLM handler (Gemma 4 E4B via llama.cpp)
+Subject: [PATCH 4/8] Add on-device LLM handler (Gemma 4 E4B via llama.cpp)
 
 New "llm" web message handler runs Gemma on the device with llamadart
 (llama.cpp, MIT); no network or cloud model is used.
@@ -1505,7 +1505,7 @@ index 0a77952..a95c0fc 100644
 From b490ea27e471105c0422f4b90dc11e8ca1e68f4a Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sun, 8 Nov 2026 00:03:28 +0800
-Subject: [PATCH 5/7] Voice: allow forcing on-device Whisper (offline mode)
+Subject: [PATCH 5/8] Voice: allow forcing on-device Whisper (offline mode)
 
 startListening accepts offline: true to skip the Google recognizer even
 when online, so the app can show it works without Google.
@@ -1561,7 +1561,7 @@ index cf210c5..3f14cd5 100644
 From e24181b73716319882467d27666b276d6d46c23e Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sun, 8 Nov 2026 00:14:40 +0800
-Subject: [PATCH 6/7] Pause Gemma while the user is speaking
+Subject: [PATCH 6/8] Pause Gemma while the user is speaking
 
 On a 4-core emulator, Gemma warm-up starved Whisper, which timed out.
 Starting to listen now cancels any running Gemma generation (error code
@@ -1665,7 +1665,7 @@ index 3f14cd5..6ce8f80 100644
 From 6fea859371521944dcc1b7c0ad308e4986cd50fa Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sun, 8 Nov 2026 00:36:54 +0800
-Subject: [PATCH 7/7] Voice: English speech recognition and English TTS
+Subject: [PATCH 7/8] Voice: English speech recognition and English TTS
 
 startListening and speak accept lang: 'en' (Google en-US / Whisper en,
 TTS en-US); default stays Traditional Chinese.
@@ -1757,6 +1757,73 @@ index 6ce8f80..b705894 100644
 +    await _tts.setLanguage(lang);
      await _tts.speak(text);
    }
+ 
+-- 
+2.56.0.windows.2
+
+
+From b4bcddec9cea96bcebc71e9e80ddd0a9c6bd539f Mon Sep 17 00:00:00 2001
+From: chenpoyu0109 <chenpoyu0109@gmail.com>
+Date: Sun, 8 Nov 2026 02:16:01 +0800
+Subject: [PATCH 8/8] Voice: report microphone level to the web page
+ (soundLevel)
+
+The voice assistant page animates ripples around the microphone button
+while the user speaks. Google recognition forwards speech_to_text's
+onSoundLevelChange; Whisper recording forwards the level above the noise
+floor. Values are 0-1, throttled to about one event per 80 ms, not logged.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../tp_voice_message_handler.dart                 | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/lib/util/web_message_handler/tp_voice_message_handler.dart b/lib/util/web_message_handler/tp_voice_message_handler.dart
+index b705894..97c9546 100644
+--- a/lib/util/web_message_handler/tp_voice_message_handler.dart
++++ b/lib/util/web_message_handler/tp_voice_message_handler.dart
+@@ -20,6 +20,7 @@ import 'package:whisper_ggml/whisper_ggml.dart';
+ ///   event：listeningStarted | listeningStopped | speechResult(text,isFinal)
+ ///          | speechError(code,message) | speakingStarted | speakingCompleted | speakingStopped
+ ///          | voiceStatus(message)（例如首次下載模型，前端可忽略）
++///          | soundLevel(level 0–1，收音中的音量，供畫面波動效果)
+ ///
+ /// 辨識（混合）：
+ /// - 有網路：Android 系統語音服務（Google），經 speech_to_text 套件（BSD-3）。
+@@ -118,6 +119,16 @@ class VoiceBridge {
+ 
+   void emitError(String code, String message) => _emit('speechError', {'code': code, 'message': message});
+ 
++  /// 收音音量（0–1），讓網頁的麥克風按鈕隨聲音波動。不寫 log、最多約每 80 ms 一次。
++  DateTime _lastLevelAt = DateTime.fromMillisecondsSinceEpoch(0);
++
++  void _emitLevel(double level) {
++    final now = DateTime.now();
++    if (now.difference(_lastLevelAt) < const Duration(milliseconds: 80)) return;
++    _lastLevelAt = now;
++    emitter?.call({'event': 'soundLevel', 'level': double.parse(level.clamp(0.0, 1.0).toStringAsFixed(2))});
++  }
++
+   /// 確保模型檔在裝置上；沒有就下載（只有第一次需要網路）。
+   Future<String?> _ensureModel() async {
+     final path = await _whisper.getPath(model);
+@@ -190,6 +201,8 @@ class VoiceBridge {
+     _googleActive = true;
+     await _speech.listen(
+       onResult: (r) => _onGoogleResult(r.recognizedWords, r.finalResult),
++      // Android 回傳約 -2～10（dB 相對值），換算成 0–1
++      onSoundLevelChange: (level) => _emitLevel((level + 2) / 12),
+       listenOptions: SpeechListenOptions(
+         listenFor: const Duration(seconds: 20),
+         pauseFor: const Duration(seconds: 4),
+@@ -290,6 +303,8 @@ class VoiceBridge {
+         ? db
+         : (db < _noiseFloor! ? db : _noiseFloor! + (db - _noiseFloor!) * 0.03);
+     _noiseFloor = floor;
++    // 高出噪音底線 0～30 dB 換算成 0–1
++    _emitLevel((db - floor) / 30);
+     final elapsed = now.difference(_startedAt);
+     if (elapsed < const Duration(milliseconds: 450)) return;
  
 -- 
 2.56.0.windows.2

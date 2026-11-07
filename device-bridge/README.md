@@ -34,6 +34,7 @@ TownPassVoice.on('speechResult', ({ text, isFinal }) => { ... });
 | `speakingStarted` | — | 可顯示「朗讀中」 |
 | `speakingCompleted` | — | 朗讀結束 |
 | `speakingStopped` | — | 使用者按了停止 |
+| `soundLevel` | `level`（0–1） | 收音中的音量，約每 80 ms 一次，前端用來顯示麥克風波紋 |
 
 ## 規則
 
