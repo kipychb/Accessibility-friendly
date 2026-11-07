@@ -1,7 +1,7 @@
 From 8ef262dc605ee81db9eef4c0b14491137b10c23c Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:19:50 +0800
-Subject: [PATCH 1/5] Add voice web message handler for Chinese STT/TTS
+Subject: [PATCH 1/6] Add voice web message handler for Chinese STT/TTS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -442,7 +442,7 @@ index 69f3c45..81c78a1 100644
 From f8ebeb1925c4d692fabada85c29c3d885f8b27f5 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 18:30:45 +0800
-Subject: [PATCH 2/5] Stop voice when leaving the WebView or app goes to
+Subject: [PATCH 2/6] Stop voice when leaving the WebView or app goes to
  background
 
 Wrap InAppWebView in VoiceLifecycleGuard, which calls
@@ -582,7 +582,7 @@ index 8f9d244..576b034 100644
 From c5eee2e4d3e2c5c1eaa9c362ba82809cae6edee0 Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 21:26:58 +0800
-Subject: [PATCH 3/5] Hybrid speech recognition: Google online, Whisper offline
+Subject: [PATCH 3/6] Hybrid speech recognition: Google online, Whisper offline
 
 - online + system recognizer available: speech_to_text (Google), fast
 - offline or no Google service: record 16 kHz WAV, then transcribe on
@@ -1186,7 +1186,7 @@ index 81c78a1..0a77952 100644
 From 1ba66451cdc0e45f6e4d646f74ab55d14297eb9a Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sat, 7 Nov 2026 22:49:48 +0800
-Subject: [PATCH 4/5] Add on-device LLM handler (Gemma 4 E4B via llama.cpp)
+Subject: [PATCH 4/6] Add on-device LLM handler (Gemma 4 E4B via llama.cpp)
 
 New "llm" web message handler runs Gemma on the device with llamadart
 (llama.cpp, MIT); no network or cloud model is used.
@@ -1505,7 +1505,7 @@ index 0a77952..a95c0fc 100644
 From b490ea27e471105c0422f4b90dc11e8ca1e68f4a Mon Sep 17 00:00:00 2001
 From: chenpoyu0109 <chenpoyu0109@gmail.com>
 Date: Sun, 8 Nov 2026 00:03:28 +0800
-Subject: [PATCH 5/5] Voice: allow forcing on-device Whisper (offline mode)
+Subject: [PATCH 5/6] Voice: allow forcing on-device Whisper (offline mode)
 
 startListening accepts offline: true to skip the Google recognizer even
 when online, so the app can show it works without Google.
@@ -1554,6 +1554,110 @@ index cf210c5..3f14cd5 100644
          await _startWhisper();
        }
      } catch (e) {
+-- 
+2.56.0.windows.2
+
+
+From e24181b73716319882467d27666b276d6d46c23e Mon Sep 17 00:00:00 2001
+From: chenpoyu0109 <chenpoyu0109@gmail.com>
+Date: Sun, 8 Nov 2026 00:14:40 +0800
+Subject: [PATCH 6/6] Pause Gemma while the user is speaking
+
+On a 4-core emulator, Gemma warm-up starved Whisper, which timed out.
+Starting to listen now cancels any running Gemma generation (error code
+yielded) so speech recognition gets the CPU; Whisper timeout 40 -> 90 s.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ .../tp_llm_message_handler.dart               | 23 ++++++++++++++++++-
+ .../tp_voice_message_handler.dart             |  5 +++-
+ 2 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/lib/util/web_message_handler/tp_llm_message_handler.dart b/lib/util/web_message_handler/tp_llm_message_handler.dart
+index 3895739..296fbc8 100644
+--- a/lib/util/web_message_handler/tp_llm_message_handler.dart
++++ b/lib/util/web_message_handler/tp_llm_message_handler.dart
+@@ -77,6 +77,19 @@ class LlmBridge {
+ 
+   void emitError(Object? id, String code, String message) => _emit('error', {'id': id, 'code': code, 'message': message});
+ 
++  bool _generating = false;
++  bool _yielded = false;
++
++  /// 使用者開始說話時呼叫：停止正在跑的推論（多半是背景預熱），把 CPU 讓給語音辨識。
++  /// 被中斷的請求會回傳 error code `yielded`，網頁端稍後會重新預熱。
++  void yieldToVoice() {
++    final engine = _engine;
++    if (engine == null || !_generating) return;
++    _yielded = true;
++    engine.cancelGeneration();
++    debugPrint('LLM_BRIDGE: yielded CPU to voice');
++  }
++
+   Future<String> _modelPath() async => '${(await getApplicationSupportDirectory()).path}/$modelFileName';
+ 
+   Future<void> status() async {
+@@ -145,6 +158,8 @@ class LlmBridge {
+     final engine = await load();
+     if (engine == null) return;
+     final started = DateTime.now();
++    _generating = true;
++    _yielded = false;
+     try {
+       final completion = await engine
+           .create(
+@@ -170,6 +185,10 @@ class LlmBridge {
+         text = match?.group(0) ?? '';
+       }
+       debugPrint('LLM_BRIDGE: finish=${completion.finishReason} thinkingChars=${completion.thinking.length}');
++      if (_yielded) {
++        emitError(id, 'yielded', 'Gemma 暫停，讓語音辨識先處理');
++        return;
++      }
+       _emit('result', {'id': id, 'text': text, 'ms': DateTime.now().difference(started).inMilliseconds});
+     } on TimeoutException {
+       // timeout 不會自動停止 llama.cpp，要明確取消，否則下一次推論會因「仍在執行」而失敗
+@@ -177,7 +196,9 @@ class LlmBridge {
+       emitError(id, 'timeout', 'Gemma 回應逾時，已改用一般查詢');
+     } catch (e) {
+       debugPrint('LLM_BRIDGE: generate failed $e');
+-      emitError(id, 'generate_failed', 'Gemma 推論失敗，已改用一般查詢');
++      emitError(id, _yielded ? 'yielded' : 'generate_failed', 'Gemma 推論失敗，已改用一般查詢');
++    } finally {
++      _generating = false;
+     }
+   }
+ }
+diff --git a/lib/util/web_message_handler/tp_voice_message_handler.dart b/lib/util/web_message_handler/tp_voice_message_handler.dart
+index 3f14cd5..6ce8f80 100644
+--- a/lib/util/web_message_handler/tp_voice_message_handler.dart
++++ b/lib/util/web_message_handler/tp_voice_message_handler.dart
+@@ -7,6 +7,7 @@ import 'package:flutter_tts/flutter_tts.dart';
+ import 'package:record/record.dart';
+ import 'package:speech_to_text/speech_recognition_error.dart';
+ import 'package:speech_to_text/speech_to_text.dart';
++import 'package:town_pass/util/web_message_handler/tp_llm_message_handler.dart';
+ import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
+ import 'package:whisper_ggml/whisper_ggml.dart';
+ 
+@@ -135,6 +136,8 @@ class VoiceBridge {
+     _starting = true;
+     try {
+       await _tts.stop();
++      // 模擬器／低階手機 CPU 有限：說話時先暫停 Gemma 背景推論，避免語音辨識被拖慢
++      LlmBridge.instance.yieldToVoice();
+       if (!await _recorder.hasPermission()) {
+         emitError('permission_denied', '尚未允許麥克風權限，請到設定開啟');
+         return;
+@@ -326,7 +329,7 @@ class VoiceBridge {
+               suppressNonSpeechTokens: true,
+               keepModelLoaded: true, // 第二句起不用重新載入模型
+             )
+-            .timeout(const Duration(seconds: 40));
++            .timeout(const Duration(seconds: 90));
+         text = _clean(result?.transcription.text ?? '');
+       } catch (e) {
+         debugPrint('VOICE_BRIDGE: whisper transcribe failed $e');
 -- 
 2.56.0.windows.2
 

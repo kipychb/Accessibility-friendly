@@ -77,6 +77,19 @@ class LlmBridge {
 
   void emitError(Object? id, String code, String message) => _emit('error', {'id': id, 'code': code, 'message': message});
 
+  bool _generating = false;
+  bool _yielded = false;
+
+  /// 使用者開始說話時呼叫：停止正在跑的推論（多半是背景預熱），把 CPU 讓給語音辨識。
+  /// 被中斷的請求會回傳 error code `yielded`，網頁端稍後會重新預熱。
+  void yieldToVoice() {
+    final engine = _engine;
+    if (engine == null || !_generating) return;
+    _yielded = true;
+    engine.cancelGeneration();
+    debugPrint('LLM_BRIDGE: yielded CPU to voice');
+  }
+
   Future<String> _modelPath() async => '${(await getApplicationSupportDirectory()).path}/$modelFileName';
 
   Future<void> status() async {
@@ -145,6 +158,8 @@ class LlmBridge {
     final engine = await load();
     if (engine == null) return;
     final started = DateTime.now();
+    _generating = true;
+    _yielded = false;
     try {
       final completion = await engine
           .create(
@@ -170,6 +185,10 @@ class LlmBridge {
         text = match?.group(0) ?? '';
       }
       debugPrint('LLM_BRIDGE: finish=${completion.finishReason} thinkingChars=${completion.thinking.length}');
+      if (_yielded) {
+        emitError(id, 'yielded', 'Gemma 暫停，讓語音辨識先處理');
+        return;
+      }
       _emit('result', {'id': id, 'text': text, 'ms': DateTime.now().difference(started).inMilliseconds});
     } on TimeoutException {
       // timeout 不會自動停止 llama.cpp，要明確取消，否則下一次推論會因「仍在執行」而失敗
@@ -177,7 +196,9 @@ class LlmBridge {
       emitError(id, 'timeout', 'Gemma 回應逾時，已改用一般查詢');
     } catch (e) {
       debugPrint('LLM_BRIDGE: generate failed $e');
-      emitError(id, 'generate_failed', 'Gemma 推論失敗，已改用一般查詢');
+      emitError(id, _yielded ? 'yielded' : 'generate_failed', 'Gemma 推論失敗，已改用一般查詢');
+    } finally {
+      _generating = false;
     }
   }
 }

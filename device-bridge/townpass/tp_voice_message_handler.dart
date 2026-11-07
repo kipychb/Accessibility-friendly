@@ -7,6 +7,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:record/record.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:town_pass/util/web_message_handler/tp_llm_message_handler.dart';
 import 'package:town_pass/util/web_message_handler/tp_web_message_handler.dart';
 import 'package:whisper_ggml/whisper_ggml.dart';
 
@@ -135,6 +136,8 @@ class VoiceBridge {
     _starting = true;
     try {
       await _tts.stop();
+      // 模擬器／低階手機 CPU 有限：說話時先暫停 Gemma 背景推論，避免語音辨識被拖慢
+      LlmBridge.instance.yieldToVoice();
       if (!await _recorder.hasPermission()) {
         emitError('permission_denied', '尚未允許麥克風權限，請到設定開啟');
         return;
@@ -326,7 +329,7 @@ class VoiceBridge {
               suppressNonSpeechTokens: true,
               keepModelLoaded: true, // 第二句起不用重新載入模型
             )
-            .timeout(const Duration(seconds: 40));
+            .timeout(const Duration(seconds: 90));
         text = _clean(result?.transcription.text ?? '');
       } catch (e) {
         debugPrint('VOICE_BRIDGE: whisper transcribe failed $e');

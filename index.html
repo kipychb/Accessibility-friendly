@@ -142,12 +142,20 @@ if(tp)tp.addEventListener('message',ev=>{let m;try{m=typeof ev.data==='string'?J
   if(!m||m.name!=='llm'||!m.data)return;const d=m.data;
   if(d.event==='status')gemma.available=!!d.ready;
   // 模型載入後先用系統提示跑一次短句，讓服務清單的計算結果留在快取，之後每句只需處理使用者的話
-  if(d.event==='loaded')gemmaReady().then(ok=>{if(ok)llmGenerate(gemmaPrompt(),'你好',600000).then(r=>{gemma.warm=true;console.log('[Gemma] warm-up',r.ms,'ms')}).catch(()=>{})});
+  if(d.event==='loaded')gemmaWarmUp();
   if((d.event==='result'||d.event==='error')&&d.id!=null&&gemma.pending.has(d.id)){const p=gemma.pending.get(d.id);gemma.pending.delete(d.id);d.event==='result'?p.resolve(d):p.reject(Object.assign(Error(d.message||d.code),{code:d.code}));}
   if(d.event==='error'&&d.code==='model_missing')gemma.available=false;
 });
 // 開啟頁面時先查模型狀態並在背景載入，第一次提問就不用等載入
 if(tp){tp.postMessage(JSON.stringify({name:'llm',data:{action:'status'}}));tp.postMessage(JSON.stringify({name:'llm',data:{action:'load'}}));}
+// 預熱：說話時原生端會暫停 Gemma（code: yielded），等使用者閒下來再重試
+function gemmaWarmUp(){
+  gemmaReady().then(ok=>{if(!ok||gemma.warm)return;
+    llmGenerate(gemmaPrompt(),'你好',600000).then(r=>{gemma.warm=true;console.log('[Gemma] warm-up',r.ms,'ms')})
+      .catch(e=>{if(e.code==='yielded')setTimeout(retryWarmUp,15000)});
+  });
+}
+function retryWarmUp(){if(state.listening||state.apiBusy){setTimeout(retryWarmUp,15000);return}gemmaWarmUp();}
 function llmGenerate(system,prompt,timeoutMs=45000){
   const id=++gemma.seq;
   return new Promise((resolve,reject)=>{
