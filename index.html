@@ -475,7 +475,9 @@ async function send(text){
      let result;
      if(state.editDraft){const loc=state.editDraft.location;state.editDraft=null;result=await ask(loc,{draft:text.slice(0,400)});}
      else result=await ask(text,state.apiContext);
-     if(result.type==='OUT_OF_SCOPE'&&!state.apiContext){
+     // 後端已認出是台北通沒有的服務（例如公車到站）時不交給 Gemma：答案不會改變，還會多等約 20 秒並佔用記憶體
+     const notOffered=/^台北通目前沒有提供「/.test(String(result.speech||''));
+     if(result.type==='OUT_OF_SCOPE'&&!state.apiContext&&!notOffered){
        const q=await gemmaQuery(text);
        if(q){const retry=await ask(q,null);if(retry.type!=='OUT_OF_SCOPE')result=retry;}
      }
