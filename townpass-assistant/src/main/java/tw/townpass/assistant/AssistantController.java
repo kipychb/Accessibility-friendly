@@ -1,7 +1,6 @@
 package tw.townpass.assistant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +19,7 @@ import java.util.regex.Pattern;
 class AssistantController {
     private static final Pattern ROUTE = Pattern.compile(
             "((?:紅|藍|棕|橘|綠|小|市民小巴|內科通勤)?[0-9]{1,4}(?:區間車|區間|副線)?|[零〇一二兩三四五六七八九十百]{1,5})\\s*(?:號|路公車)");
+    private static final Pattern CATALOG_SEPARATORS = Pattern.compile("[\\s\\p{P}]+");
     private final ServiceRepository catalog;
     private final BusFeed bus;
 
@@ -30,7 +30,7 @@ class AssistantController {
 
     @GetMapping("/services")
     List<ServiceEntry> services() {
-        return catalog.findAll(Sort.by("id"));
+        return catalog.listWithAliases();
     }
 
     @PostMapping("/query")
@@ -62,28 +62,27 @@ class AssistantController {
             return new Reply("CLARIFY", "請說出道路名稱、門牌或附近地標，方便整理陳情草稿。",
                     service, null, null, null, new Context(null, null, null, null, request.text()), null);
         }
-        if (contains(text, "敬老卡", "敬老悠遊卡", "敬老乘車證")) {
-            return guidance("senior-card");
+        if (context.route() != null || spokenRoute != null && contains(text, "公車", "到站", "幾點來", "多久來", "多久到")) {
+            return busReply(text, spokenRoute, context);
         }
-        if (contains(text, "愛心卡", "愛心悠遊卡", "愛心陪伴卡", "愛心陪伴悠遊卡", "身障乘車")) {
-            return guidance("disability-card");
-        }
-        if (contains(text, "無障礙計程車", "敬老愛心計程車", "輪椅叫車")) {
-            return guidance("accessible-taxi");
-        }
-        if (contains(text, "無障礙廁所", "無障礙公廁")) {
-            return guidance("accessible-toilets");
+        ServiceEntry match = matchService(text);
+        if (match != null) {
+            return "bus-arrivals".equals(match.id) ? busReply(text, spokenRoute, context)
+                    : reply("GUIDANCE", match, match.summary);
         }
         if (text.contains("無障礙設施")) {
             return reply("GUIDANCE", service("accessible-toilets"),
                     "如果你在找無障礙廁所，可以按行政區查看市府公廁清單。若你想找其他設施，請說出設施類型。");
         }
-        if (text.contains("公車") || context.route() != null
-                || spokenRoute != null && contains(text, "到站", "幾點來", "多久來", "多久到")) {
+        if (text.contains("公車")) {
             return busReply(text, spokenRoute, context);
         }
+        if (contains(catalogText(text), "台北通", "taipeipass")) {
+            ServiceEntry help = service("taipeipass-help");
+            return reply("GUIDANCE", help, "目前找不到這個台北通功能的對應資料。你可以查看官方功能教學與常見問題。");
+        }
         return reply("OUT_OF_SCOPE", null,
-                "目前可以查公車到站，或提供道路陳情、敬老卡、愛心卡、無障礙計程車與公廁資訊。");
+                "目前找不到對應的台北通服務。你可以問帳號、卡證、市政申辦、繳費、優惠、交通或找地點。");
     }
 
     private Reply busReply(String text, String spokenRoute, Context context) {
@@ -203,9 +202,24 @@ class AssistantController {
         return stop.direction() == 0 ? route.destination() : route.departure();
     }
 
-    private Reply guidance(String id) {
-        ServiceEntry entry = service(id);
-        return reply("GUIDANCE", entry, entry.summary);
+    private ServiceEntry matchService(String text) {
+        String query = catalogText(text);
+        ServiceEntry best = null;
+        int length = 0;
+        for (ServiceEntry entry : services()) {
+            for (String alias : entry.aliases) {
+                String candidate = catalogText(alias);
+                if (candidate.length() > length && query.contains(candidate)) {
+                    best = entry;
+                    length = candidate.length();
+                }
+            }
+        }
+        return best;
+    }
+
+    private static String catalogText(String text) {
+        return CATALOG_SEPARATORS.matcher(normalize(text).toLowerCase(java.util.Locale.ROOT)).replaceAll("");
     }
 
     private ServiceEntry service(String id) {

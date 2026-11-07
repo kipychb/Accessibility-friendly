@@ -23,7 +23,7 @@
             "type": "text/javascript",
             "exec": [
               "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json).to.have.lengthOf(6); pm.expect(json.some(s => s.id === 'bus-arrivals' && s.mode === 'LIVE')).to.be.true; });"
+              "pm.test(\"回覆契約\", () => { const json = pm.response.json(); pm.expect(json.length).to.be.at.least(55); pm.expect(json.some(s => s.id === 'bus-arrivals' && s.mode === 'LIVE')).to.be.true; pm.expect(json.some(s => s.id === 'parking-payment' && s.aliases.includes('停車費'))).to.be.true; });"
             ]
           }
         }

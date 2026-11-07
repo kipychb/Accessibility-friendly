@@ -7,7 +7,15 @@
     "officialUrl": "https://ebus.gov.taipei/",
     "sourceUrl": "https://data.taipei/dataset/detail?id=f11a5af0-7b37-48ef-98cc-f6f102ed43c6",
     "scopeEvidenceUrl": "https://pto.gov.taipei/News_Content.aspx?n=A1DF07A86105B6BB&s=55E8ADD164E4F579",
-    "summary": "提供路線與站牌後可查詢官方預估到站。到站時間可能隨路況變動。此項依專案需求納入，資料由公共運輸處提供。"
+    "summary": "提供路線與站牌後可查詢官方預估到站。到站時間可能隨路況變動。此項依專案需求納入，資料由公共運輸處提供。",
+    "category": "交通",
+    "aliases": [
+      "大台北公車到站",
+      "公車到站",
+      "公車動態",
+      "公車幾點來",
+      "公車多久到"
+    ]
   },
   {
     "id": "road-report",
@@ -17,7 +25,15 @@
     "officialUrl": "https://hello.gov.taipei/Front/main",
     "sourceUrl": "https://hello.gov.taipei/front/Accept/CasLogin/CasFlowChart",
     "scopeEvidenceUrl": "https://rdec.gov.taipei/News_Content.aspx?n=2FDEBE240FA2FAFC&s=2370F031FC488F0E&sms=F80C92E6A535E4E9",
-    "summary": "可反映人行道破損、斜坡道或通行障礙。先確認描述及地點，再前往官方系統填寫並送出。"
+    "summary": "可反映人行道破損、斜坡道或通行障礙。先確認描述及地點，再前往官方系統填寫並送出。",
+    "category": "市政服務",
+    "aliases": [
+      "1999",
+      "人行道破損",
+      "市政陳情",
+      "有話要說",
+      "申訴道路"
+    ]
   },
   {
     "id": "senior-card",
@@ -27,7 +43,13 @@
     "officialUrl": "https://dosw.gov.taipei/cp.aspx?n=4683CD9EE2EB68B1&s=48A233DC72F7F0CE",
     "sourceUrl": "https://dosw.gov.taipei/cp.aspx?n=4683CD9EE2EB68B1&s=48A233DC72F7F0CE",
     "scopeEvidenceUrl": "https://id.taipei/tpcd/",
-    "summary": "可至臺北市各區公所社會課洽辦敬老卡。請依社會局頁面確認資格、應備文件與代辦方式。"
+    "summary": "可至臺北市各區公所社會課洽辦敬老卡。請依社會局頁面確認資格、應備文件與代辦方式。",
+    "category": "卡證",
+    "aliases": [
+      "敬老卡",
+      "敬老悠遊卡",
+      "敬老乘車證"
+    ]
   },
   {
     "id": "disability-card",
@@ -37,7 +59,16 @@
     "officialUrl": "https://dosw.gov.taipei/cp.aspx?n=98EA840859DF5D7F",
     "sourceUrl": "https://dosw.gov.taipei/cp.aspx?n=98EA840859DF5D7F",
     "scopeEvidenceUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
-    "summary": "設籍臺北市且領有身心障礙證明，可向區公所詢問愛心卡。愛心陪伴卡另有資格條件，請查閱社會局說明。"
+    "summary": "設籍臺北市且領有身心障礙證明，可向區公所詢問愛心卡。愛心陪伴卡另有資格條件，請查閱社會局說明。",
+    "category": "卡證",
+    "aliases": [
+      "愛心卡",
+      "愛心悠遊卡",
+      "愛心陪伴卡",
+      "愛心陪同卡",
+      "愛心陪伴悠遊卡",
+      "身障乘車"
+    ]
   },
   {
     "id": "accessible-toilets",
@@ -47,7 +78,14 @@
     "officialUrl": "https://www.teis-pt.gov.taipei/Public/ToiletSearch.aspx",
     "sourceUrl": "https://www.teis-pt.gov.taipei/Public/ToiletSearch.aspx",
     "scopeEvidenceUrl": "https://id.taipei/tpcd/about/taipeipass-app",
-    "summary": "可用臺北市公廁查詢按行政區搜尋並查看無障礙欄位。目前無法判斷離你最近的設施或是否開放。"
+    "summary": "可用臺北市公廁查詢按行政區搜尋並查看無障礙欄位。目前無法判斷離你最近的設施或是否開放。",
+    "category": "地圖與生活",
+    "aliases": [
+      "無障礙廁所",
+      "無障礙公廁",
+      "公廁",
+      "找廁所"
+    ]
   },
   {
     "id": "accessible-taxi",
@@ -57,6 +95,902 @@
     "officialUrl": "https://pto.gov.taipei/News_Content.aspx?n=885A55CFAE628CA9&s=E79356922050B5A4&sms=EDEE30A7FEECCE11",
     "sourceUrl": "https://pto.gov.taipei/News_Content.aspx?n=885A55CFAE628CA9&s=E79356922050B5A4&sms=EDEE30A7FEECCE11",
     "scopeEvidenceUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
-    "summary": "需要乘輪椅搭車時，可依公共運輸處列出的方式聯絡無障礙車隊，並向車隊確認車輛及可預約時間。"
+    "summary": "需要乘輪椅搭車時，可依公共運輸處列出的方式聯絡無障礙車隊，並向車隊確認車輛及可預約時間。",
+    "category": "交通",
+    "aliases": [
+      "無障礙計程車",
+      "敬老愛心計程車",
+      "輪椅叫車"
+    ]
+  },
+  {
+    "id": "member-registration",
+    "title": "台北通會員註冊",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/registration",
+    "sourceUrl": "https://doit.gov.taipei/News_Content.aspx?n=EF602DBE24B3E79F&s=87483ACB43C87C87&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://doit.gov.taipei/News_Content.aspx?n=EF602DBE24B3E79F&s=87483ACB43C87C87&sms=87415A8B9CE81B16",
+    "summary": "可在台北通官網或 App 註冊，請依官方頁面的驗證步驟操作。",
+    "category": "會員",
+    "aliases": [
+      "台北通註冊",
+      "註冊台北通",
+      "註冊會員",
+      "申請會員",
+      "加入台北通"
+    ]
+  },
+  {
+    "id": "member-login",
+    "title": "台北通登入與掃碼",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/login",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "summary": "請前往官方登入頁。支援台北通的市政平台也可依登入頁的說明使用 App 掃碼。",
+    "category": "會員",
+    "aliases": [
+      "台北通登入",
+      "登入台北通",
+      "怎麼登入",
+      "掃碼登入",
+      "QR Code登入",
+      "單一登入",
+      "市政單一帳號"
+    ]
+  },
+  {
+    "id": "member-password",
+    "title": "忘記密碼與帳號解鎖",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/login",
+    "sourceUrl": "https://doit.gov.taipei/News_Content.aspx?n=EF602DBE24B3E79F&s=ADF922FDDA8577F8&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://doit.gov.taipei/News_Content.aspx?n=EF602DBE24B3E79F&s=ADF922FDDA8577F8&sms=87415A8B9CE81B16",
+    "summary": "請在官方登入頁選擇忘記密碼，依畫面完成驗證。帳號鎖定或無法收信時可查官方常見問題。",
+    "category": "會員",
+    "aliases": [
+      "忘記密碼",
+      "登入忘記密碼",
+      "忘了密碼",
+      "帳號鎖定",
+      "帳號被鎖",
+      "重設密碼",
+      "修改密碼",
+      "變更密碼"
+    ]
+  },
+  {
+    "id": "member-verification",
+    "title": "會員身分驗證與升級",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/faq",
+    "sourceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "summary": "請在台北通 App 或官網依目前可用方式驗證身分。請在官方頁面填寫資料。",
+    "category": "會員",
+    "aliases": [
+      "金質會員",
+      "實名認證",
+      "身分驗證",
+      "身份驗證",
+      "會員升級",
+      "手機門號驗證"
+    ]
+  },
+  {
+    "id": "member-profile",
+    "title": "會員資料與帳號管理",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/login",
+    "sourceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "summary": "請登入台北通管理會員資料。各項變更和刪除帳號的驗證方式以官方說明為準。",
+    "category": "會員",
+    "aliases": [
+      "會員資料",
+      "個人資料變更",
+      "修改手機號碼",
+      "修改電子郵件",
+      "刪除帳號",
+      "註銷帳號",
+      "帳號管理"
+    ]
+  },
+  {
+    "id": "taipeipass-help",
+    "title": "台北通功能總覽與客服",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/faq",
+    "sourceUrl": "https://id.taipei/tpcd/",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/",
+    "summary": "台北通提供卡證、市政服務、帳單和優惠等功能。可到官網查看功能教學、下載 App 或聯絡客服。",
+    "category": "會員",
+    "aliases": [
+      "台北通客服",
+      "下載app",
+      "台北通有什麼功能",
+      "支援裝置"
+    ]
+  },
+  {
+    "id": "easycard-link",
+    "title": "悠遊卡綁定與掛失指引",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/features/card",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/card",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/card",
+    "summary": "可在 App 卡證區依指示綁定悠遊卡。遺失時請依卡別查詢發卡機關或悠遊卡公司的掛失方式。",
+    "category": "卡證",
+    "aliases": [
+      "綁定悠遊卡",
+      "綁悠遊卡",
+      "解除綁定悠遊卡",
+      "悠遊卡遺失",
+      "悠遊卡掛失"
+    ]
+  },
+  {
+    "id": "virtual-cards",
+    "title": "虛擬卡證與卡面",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/tpcard",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/card",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/card",
+    "summary": "請登入台北通，在卡證功能查看已開通的卡面。部分服務仍需使用實體卡。",
+    "category": "卡證",
+    "aliases": [
+      "虛擬卡證",
+      "數位卡證",
+      "卡證歸戶",
+      "我的卡證",
+      "卡證開通",
+      "出示卡面",
+      "虛擬卡"
+    ]
+  },
+  {
+    "id": "student-card",
+    "title": "數位學生證",
+    "mode": "GUIDE",
+    "authority": "臺北市政府教育局",
+    "officialUrl": "https://id.taipei/tpcd/about/tpcard",
+    "sourceUrl": "https://www.doe.gov.taipei/Content_List.aspx?n=6A12E356DE7A1B19",
+    "scopeEvidenceUrl": "https://www.doe.gov.taipei/Content_List.aspx?n=6A12E356DE7A1B19",
+    "summary": "可在台北通卡片介紹了解學生卡；申請、補發和校務資料請向就讀學校確認。",
+    "category": "卡證",
+    "aliases": [
+      "數位學生證",
+      "學生卡",
+      "學生悠遊卡"
+    ]
+  },
+  {
+    "id": "child-card",
+    "title": "兒童優惠卡",
+    "mode": "GUIDE",
+    "authority": "臺北市區公所",
+    "officialUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
+    "sourceUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
+    "scopeEvidenceUrl": "https://ssdo.gov.taipei/News_Content.aspx?n=75721BE1DB8928C8&s=4131FEAAF96BFC31",
+    "summary": "可向區公所洽詢兒童優惠卡的申請條件、文件與補發方式。",
+    "category": "卡證",
+    "aliases": [
+      "兒童優惠卡",
+      "兒童卡",
+      "兒童乘車證"
+    ]
+  },
+  {
+    "id": "library-card",
+    "title": "圖書借閱證",
+    "mode": "GUIDE",
+    "authority": "臺北市立圖書館",
+    "officialUrl": "https://book.tpml.edu.tw/",
+    "sourceUrl": "https://id.taipei/tpcd/about/faq/tutorial?category=40&support=web",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/faq/tutorial?category=40&support=web",
+    "summary": "請在臺北市立圖書館館藏查詢系統登入，在個人主頁選擇與台北通結合。",
+    "category": "卡證",
+    "aliases": [
+      "圖書借閱證",
+      "圖書館借書證",
+      "圖書證",
+      "借書證",
+      "圖書館綁定"
+    ]
+  },
+  {
+    "id": "pregnancy-card",
+    "title": "孕婦證與好孕乘車",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/faq",
+    "sourceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "summary": "請在台北通卡證及好孕乘車功能查看可用服務。資格、額度與適用車隊依市府公告及會員畫面為準。",
+    "category": "卡證",
+    "aliases": [
+      "孕婦證",
+      "好孕乘車",
+      "孕婦搭計程車",
+      "好孕車資補助"
+    ]
+  },
+  {
+    "id": "welfare-cards",
+    "title": "福利身分與榮譽卡證",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/tpcard",
+    "sourceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "summary": "請登入台北通查看已開通卡證；認定、補發及資料異動請洽核發機關。",
+    "category": "卡證",
+    "aliases": [
+      "中低收入戶證",
+      "低收入戶證",
+      "志願服務榮譽證",
+      "志工榮譽卡",
+      "公教退休證",
+      "退休人員服務證"
+    ]
+  },
+  {
+    "id": "billing-overview",
+    "title": "帳單與智慧支付",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/bill",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/bill",
+    "summary": "請開啟台北通的帳單功能或前往臺北市智慧支付平台，選擇要查詢的費用種類。",
+    "category": "帳務",
+    "aliases": [
+      "帳單",
+      "智慧支付",
+      "pay.taipei",
+      "繳費方式",
+      "付款方式",
+      "欠費"
+    ]
+  },
+  {
+    "id": "parking-payment",
+    "title": "臺北市停車費",
+    "mode": "GUIDE",
+    "authority": "臺北市停車管理工程處",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://pma.gov.taipei/cp.aspx?n=23B2081E3D3A78F8&s=3F7D36E804198D7F",
+    "scopeEvidenceUrl": "https://pma.gov.taipei/cp.aspx?n=23B2081E3D3A78F8&s=3F7D36E804198D7F",
+    "summary": "可在台北通帳單或智慧支付平台查詢適用的臺北市停車費，請在官方畫面填寫車號。",
+    "category": "帳務",
+    "aliases": [
+      "停車費",
+      "停車單",
+      "停車繳費",
+      "路邊停車欠費",
+      "停車帳單"
+    ]
+  },
+  {
+    "id": "water-payment",
+    "title": "自來水費與水號",
+    "mode": "GUIDE",
+    "authority": "臺北自來水事業處",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/bill",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/bill",
+    "summary": "可在台北通帳單選擇自來水費，依官方畫面輸入或綁定水號。",
+    "category": "帳務",
+    "aliases": [
+      "水費",
+      "水費帳單",
+      "水號",
+      "水單",
+      "自來水帳單"
+    ]
+  },
+  {
+    "id": "school-payment",
+    "title": "學雜費",
+    "mode": "GUIDE",
+    "authority": "臺北市政府教育局",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://www.gov.taipei/News_Content.aspx?n=F0DDAF49B89E9413&s=01FAEA71D8F90745",
+    "scopeEvidenceUrl": "https://www.gov.taipei/News_Content.aspx?n=F0DDAF49B89E9413&s=01FAEA71D8F90745",
+    "summary": "可在台北通帳單或智慧支付平台查詢支援的學雜費項目。請準備校方提供的繳費資訊。",
+    "category": "帳務",
+    "aliases": [
+      "學雜費",
+      "學費",
+      "學校繳費",
+      "註冊費"
+    ]
+  },
+  {
+    "id": "tax-payment",
+    "title": "臺北市地方稅費",
+    "mode": "GUIDE",
+    "authority": "臺北市稅捐稽徵處",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://tpctax.gov.taipei/News_Content.aspx?n=BB8B93F0A49EAB80&s=5B52BAA4B172878B&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://tpctax.gov.taipei/News_Content.aspx?n=BB8B93F0A49EAB80&s=5B52BAA4B172878B&sms=87415A8B9CE81B16",
+    "summary": "可在台北通帳單選擇地方稅，依稅捐稽徵處的說明掃描稅單。適用稅目與期限以官方頁面為準。",
+    "category": "帳務",
+    "aliases": [
+      "地方稅",
+      "房屋稅",
+      "地價稅",
+      "牌照稅",
+      "繳稅",
+      "稅單"
+    ]
+  },
+  {
+    "id": "medical-payment",
+    "title": "醫療費用",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "summary": "智慧支付平台有合作醫療院所的繳費項目，請依院所和官方平台畫面查詢。",
+    "category": "帳務",
+    "aliases": [
+      "醫療費",
+      "醫院帳單",
+      "聯醫繳費",
+      "門診費",
+      "醫藥費"
+    ]
+  },
+  {
+    "id": "traffic-fines",
+    "title": "交通違規費用",
+    "mode": "GUIDE",
+    "authority": "臺北市交通事件裁決所",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "summary": "請在智慧支付平台查看適用的臺北市交通違規費用項目，其他罰單依開單機關指示辦理。",
+    "category": "帳務",
+    "aliases": [
+      "交通罰單",
+      "交通罰鍰",
+      "違規罰鍰",
+      "罰鍰分期"
+    ]
+  },
+  {
+    "id": "payment-history",
+    "title": "繳費紀錄與行動帳本",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://pay.taipei/",
+    "sourceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://doit.gov.taipei/News.aspx?n=05E80FE53D8DD88A&sms=87415A8B9CE81B16",
+    "summary": "請登入台北通帳單或智慧支付平台查看已繳資料；各費用的收據與證明規則以官方說明為準。",
+    "category": "帳務",
+    "aliases": [
+      "繳費紀錄",
+      "繳款紀錄",
+      "行動帳本",
+      "繳費收據",
+      "停車費收據",
+      "繳納證明",
+      "繳費證明"
+    ]
+  },
+  {
+    "id": "coupons",
+    "title": "優惠券與票夾",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/offers/coupons",
+    "sourceUrl": "https://id.taipei/tpcd/about/faq/tutorial?category=41&support=app",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/faq/tutorial?category=41&support=app",
+    "summary": "可在台北通優惠區尋找優惠券，依券面規則加入票夾或兌換。活動期限與適用資格請看券面。",
+    "category": "優惠",
+    "aliases": [
+      "優惠券",
+      "票夾",
+      "領券",
+      "兌換優惠",
+      "熊好券"
+    ]
+  },
+  {
+    "id": "partner-offers",
+    "title": "特約商家與場館優惠",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/offers",
+    "sourceUrl": "https://id.taipei/tpcd/offers",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/offers",
+    "summary": "可透過台北通優惠區或官網特約商家搜尋店家和優惠，使用前請確認券面限制。",
+    "category": "優惠",
+    "aliases": [
+      "特約商家",
+      "合作店家",
+      "商家折扣",
+      "場館優惠",
+      "門票優惠",
+      "台北通優惠",
+      "消費折扣"
+    ]
+  },
+  {
+    "id": "city-applications",
+    "title": "台北服務通與申辦進度",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://service.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "summary": "可到台北服務通搜尋申辦項目、查看應備文件或登入查詢已送出的申辦進度。",
+    "category": "市政服務",
+    "aliases": [
+      "申辦服務",
+      "線上申辦",
+      "台北服務通",
+      "市民服務大平台",
+      "申辦進度",
+      "申請進度",
+      "申辦案件"
+    ]
+  },
+  {
+    "id": "counter-queue",
+    "title": "臨櫃叫號",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/taipeipass-app",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "請在台北通服務區選擇臨櫃叫號及受理機關，依畫面查詢目前叫號。",
+    "category": "市政服務",
+    "aliases": [
+      "臨櫃叫號",
+      "櫃檯叫號",
+      "臨櫃排隊",
+      "叫號查詢",
+      "取號"
+    ]
+  },
+  {
+    "id": "disaster-report",
+    "title": "臺北市災情通報",
+    "mode": "GUIDE",
+    "authority": "臺北市政府災害應變中心",
+    "officialUrl": "https://hello.gov.taipei/front/Accept/EocLogin",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可前往臺北市官方災情通報系統，依畫面填寫災情及位置。若有人受傷、受困或有立即危險，請打 119。",
+    "category": "市政服務",
+    "aliases": [
+      "災情通報",
+      "災害通報",
+      "通報淹水",
+      "通報路樹倒塌"
+    ]
+  },
+  {
+    "id": "police-service",
+    "title": "臺北市警政服務",
+    "mode": "GUIDE",
+    "authority": "臺北市政府警察局",
+    "officialUrl": "https://police.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可至警察局官網查詢警政服務及辦理方式。遇需立即處理的警情請撥 110。",
+    "category": "市政服務",
+    "aliases": [
+      "警政服務",
+      "警政報案",
+      "我要報案",
+      "遺失物查詢"
+    ]
+  },
+  {
+    "id": "participation",
+    "title": "市民參與與意見調查",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/features/connect",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可在台北通服務區查看已上架的調查或投票，依個別活動的資格與期間參與。",
+    "category": "市政服務",
+    "aliases": [
+      "網路投票",
+      "意見調查",
+      "市民提案",
+      "參與式預算",
+      "公民參與"
+    ]
+  },
+  {
+    "id": "welfare-estimate",
+    "title": "社會福利與福利試算",
+    "mode": "GUIDE",
+    "authority": "臺北市政府社會局",
+    "officialUrl": "https://dosw.gov.taipei/",
+    "sourceUrl": "https://www.gov.taipei/News_Content.aspx?n=F0DDAF49B89E9413&s=01FAEA71D8F90745",
+    "scopeEvidenceUrl": "https://www.gov.taipei/News_Content.aspx?n=F0DDAF49B89E9413&s=01FAEA71D8F90745",
+    "summary": "可先查臺北市政府社會局的福利資訊，再依官方說明確認資格、文件和申請方式。",
+    "category": "市政服務",
+    "aliases": [
+      "福利試算",
+      "福利適算",
+      "福利資格",
+      "社會福利",
+      "補助申請",
+      "育兒津貼"
+    ]
+  },
+  {
+    "id": "city-learning",
+    "title": "臺北 e 大",
+    "mode": "GUIDE",
+    "authority": "臺北市政府公務人員訓練處",
+    "officialUrl": "https://elearning.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/policies/terms",
+    "summary": "請到臺北 e 大搜尋數位課程並依官方頁面登入。",
+    "category": "市政服務",
+    "aliases": [
+      "台北e大",
+      "台北ｅ大",
+      "市民數位學習",
+      "線上學習課程"
+    ]
+  },
+  {
+    "id": "neighborhood",
+    "title": "里辦公處與里鄰服務",
+    "mode": "GUIDE",
+    "authority": "臺北市政府民政局",
+    "officialUrl": "https://ca.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可透過臺北市政府民政局及各區公所網站查詢里辦公處、行政區與聯絡方式。",
+    "category": "市政服務",
+    "aliases": [
+      "里辦服務",
+      "里辦公處",
+      "里長聯絡",
+      "里鄰服務",
+      "區公所"
+    ]
+  },
+  {
+    "id": "library",
+    "title": "臺北市立圖書館",
+    "mode": "GUIDE",
+    "authority": "臺北市立圖書館",
+    "officialUrl": "https://book.tpml.edu.tw/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可到臺北市立圖書館館藏查詢系統查書。預約、續借與個人借閱紀錄需在館方系統登入。",
+    "category": "市政服務",
+    "aliases": [
+      "圖書借閱",
+      "圖書館",
+      "查館藏",
+      "預約圖書",
+      "續借",
+      "借閱紀錄",
+      "還書"
+    ]
+  },
+  {
+    "id": "hospital",
+    "title": "臺北市立聯合醫院掛號",
+    "mode": "GUIDE",
+    "authority": "臺北市立聯合醫院",
+    "officialUrl": "https://tpech.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "請至臺北市立聯合醫院官網選擇院區與掛號或看診進度服務。",
+    "category": "市政服務",
+    "aliases": [
+      "聯醫掛號",
+      "聯合醫院掛號",
+      "醫院掛號",
+      "看診進度",
+      "門診掛號"
+    ]
+  },
+  {
+    "id": "vaccination",
+    "title": "臺北市疫苗服務",
+    "mode": "GUIDE",
+    "authority": "臺北市政府衛生局",
+    "officialUrl": "https://health.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "請查看臺北市政府衛生局公布的疫苗接種及預約資訊。適用對象及時段以官方公告為準。",
+    "category": "市政服務",
+    "aliases": [
+      "疫苗預約",
+      "疫苗接種",
+      "流感疫苗",
+      "打疫苗"
+    ]
+  },
+  {
+    "id": "water-service",
+    "title": "您的水管家",
+    "mode": "GUIDE",
+    "authority": "臺北自來水事業處",
+    "officialUrl": "https://www.water.gov.taipei/",
+    "sourceUrl": "https://www.gov.taipei/News_Content.aspx?n=D0042A87C2F0270A&s=AF33362CBD8CAF40&sms=78D644F2755ACCAA",
+    "scopeEvidenceUrl": "https://www.gov.taipei/News_Content.aspx?n=D0042A87C2F0270A&s=AF33362CBD8CAF40&sms=78D644F2755ACCAA",
+    "summary": "可從臺北自來水事業處進入您的水管家，依需求查詢停水、水質或登入管理用水。",
+    "category": "市政服務",
+    "aliases": [
+      "水管家",
+      "用水服務",
+      "停水查詢",
+      "水質資訊",
+      "用水異常"
+    ]
+  },
+  {
+    "id": "parent-child-centers",
+    "title": "臺北市親子館",
+    "mode": "GUIDE",
+    "authority": "臺北市政府社會局",
+    "officialUrl": "https://dosw.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可在社會局官方網站查看臺北市親子館的場館、開放及預約方式。",
+    "category": "市政服務",
+    "aliases": [
+      "親子館",
+      "親子館預約",
+      "親子活動"
+    ]
+  },
+  {
+    "id": "zoo",
+    "title": "臺北市立動物園",
+    "mode": "GUIDE",
+    "authority": "臺北市立動物園",
+    "officialUrl": "https://www.zoo.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "請查閱臺北市立動物園的開園、票價和參觀資訊，優惠券依 App 券面為準。",
+    "category": "市政服務",
+    "aliases": [
+      "愛遊動物園",
+      "動物園",
+      "木柵動物園"
+    ]
+  },
+  {
+    "id": "taipei-radio",
+    "title": "臺北廣播電臺",
+    "mode": "GUIDE",
+    "authority": "臺北廣播電臺",
+    "officialUrl": "https://www.radio.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可至臺北廣播電臺網站查看節目表、收聽方式及相關消息。",
+    "category": "市政服務",
+    "aliases": [
+      "台北電台",
+      "台北廣播電台",
+      "台北廣播電臺",
+      "台北電臺"
+    ]
+  },
+  {
+    "id": "essentials",
+    "title": "民生物資資訊",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/features/connect",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可在台北通服務區查看民生物資入口；各類物價及公告以市府或主管機關公開資料為準。",
+    "category": "市政服務",
+    "aliases": [
+      "民生物資",
+      "民生用品物價",
+      "民生物價"
+    ]
+  },
+  {
+    "id": "subscriptions",
+    "title": "市政訊息訂閱",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://id.taipei/tpcd/about/taipeipass-app",
+    "sourceUrl": "https://www.gov.taipei/News_Content.aspx?n=F0DDAF49B89E9413&s=01FAEA71D8F90745",
+    "scopeEvidenceUrl": "https://www.gov.taipei/News_Content.aspx?n=F0DDAF49B89E9413&s=01FAEA71D8F90745",
+    "summary": "可在台北通的訊息或訂閱功能選擇感興趣的主題。個人的訂閱清單及推播設定請在 App 管理。",
+    "category": "訊息",
+    "aliases": [
+      "市政訊息訂閱",
+      "訂閱市政消息",
+      "訂閱通知",
+      "市政推播",
+      "里鄰通知",
+      "圖書到期通知",
+      "訊息訂閱",
+      "推播通知"
+    ]
+  },
+  {
+    "id": "city-news",
+    "title": "市政消息與活動",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://www.gov.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/",
+    "summary": "可前往市府網站查看最新市政消息和活動。實際時間及報名資格以活動公告為準。",
+    "category": "訊息",
+    "aliases": [
+      "市政新聞",
+      "市政消息",
+      "市政公告",
+      "台北通活動",
+      "台北活動",
+      "活動資訊"
+    ]
+  },
+  {
+    "id": "map-explore",
+    "title": "探索臺北與找地點",
+    "mode": "GUIDE",
+    "authority": "臺北市政府觀光傳播局",
+    "officialUrl": "https://www.travel.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "summary": "在台北通開啟服務、找地點，可依需求選擇主題地圖；臺北旅遊網也提供景點與活動資訊。",
+    "category": "地圖與生活",
+    "aliases": [
+      "探索台北",
+      "找地點",
+      "主題地圖",
+      "附近景點",
+      "台北景點",
+      "台北市地圖"
+    ]
+  },
+  {
+    "id": "city-dashboard",
+    "title": "臺北城市儀表板",
+    "mode": "GUIDE",
+    "authority": "臺北市政府資訊局",
+    "officialUrl": "https://citydashboard.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "可在臺北城市儀表板查看公開市政資料與地圖，資料時間以各圖層說明為準。",
+    "category": "地圖與生活",
+    "aliases": [
+      "城市儀表板",
+      "市政儀表板",
+      "市政資訊儀表板",
+      "城市數據"
+    ]
+  },
+  {
+    "id": "road-construction",
+    "title": "道路施工資訊",
+    "mode": "GUIDE",
+    "authority": "臺北市政府工務局新建工程處",
+    "officialUrl": "https://nco.gov.taipei/",
+    "sourceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "scopeEvidenceUrl": "https://github.com/taipei-doit/TownPass/blob/main/lib/page/city_service/model/my_service_model.dart",
+    "summary": "請在台北通找地點選擇施工資訊，或前往市府道路相關公告核對施工範圍與時間。",
+    "category": "地圖與生活",
+    "aliases": [
+      "施工資訊",
+      "道路施工",
+      "施工路段",
+      "道路工程"
+    ]
+  },
+  {
+    "id": "trash-routes",
+    "title": "臺北市垃圾清運",
+    "mode": "GUIDE",
+    "authority": "臺北市政府環境保護局",
+    "officialUrl": "https://www.dep-trash-can.gov.taipei/tcr/",
+    "sourceUrl": "https://www.dep.gov.taipei/News_Content.aspx?n=00CB5204D6AA86C0&s=1F1277311DE8F7A5",
+    "scopeEvidenceUrl": "https://www.dep.gov.taipei/News_Content.aspx?n=00CB5204D6AA86C0&s=1F1277311DE8F7A5",
+    "summary": "可到環保局垃圾清運查詢選擇行政區及路段，確認清運點和時段。",
+    "category": "地圖與生活",
+    "aliases": [
+      "垃圾車",
+      "垃圾清運",
+      "清運路線",
+      "倒垃圾",
+      "回收車",
+      "大型垃圾",
+      "廚餘清運"
+    ]
+  },
+  {
+    "id": "outdoors",
+    "title": "公園、步道與寵物友善景點",
+    "mode": "GUIDE",
+    "authority": "臺北市政府觀光傳播局",
+    "officialUrl": "https://www.travel.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "summary": "可在台北通探索臺北查看主題景點，或由臺北旅遊網查詢公園及步道。入場限制以現場及主管機關公告為準。",
+    "category": "地圖與生活",
+    "aliases": [
+      "簡單森呼吸",
+      "寵物安心遛",
+      "遛狗",
+      "寵物公園",
+      "親子公園",
+      "登山步道",
+      "台北步道"
+    ]
+  },
+  {
+    "id": "smoking-areas",
+    "title": "指定吸菸區",
+    "mode": "GUIDE",
+    "authority": "臺北市政府衛生局",
+    "officialUrl": "https://citydashboard.taipei/",
+    "sourceUrl": "https://wsdo.gov.taipei/News_Content.aspx?n=927252479D3F786F&s=1D9BEFBF0383DD4D&sms=87415A8B9CE81B16",
+    "scopeEvidenceUrl": "https://wsdo.gov.taipei/News_Content.aspx?n=927252479D3F786F&s=1D9BEFBF0383DD4D&sms=87415A8B9CE81B16",
+    "summary": "在台北通服務的找地點選擇指定吸菸區。實際區域及開放資訊依市府公告與現場標示。",
+    "category": "地圖與生活",
+    "aliases": [
+      "指定吸菸區",
+      "吸菸區地圖",
+      "哪裡可以吸菸"
+    ]
+  },
+  {
+    "id": "youbike",
+    "title": "YouBike 站點與車位",
+    "mode": "GUIDE",
+    "authority": "臺北市政府交通局",
+    "officialUrl": "https://www.youbike.com.tw/region/taipei/stations/",
+    "sourceUrl": "https://dot.gov.taipei/News_Content.aspx?n=8AF5CCCCF7B8610A&s=6E64C35F473471D9",
+    "scopeEvidenceUrl": "https://dot.gov.taipei/News_Content.aspx?n=8AF5CCCCF7B8610A&s=6E64C35F473471D9",
+    "summary": "請在台北通或 YouBike 官方站點地圖查看可借車與可還車位。數量以官方即時畫面為準。",
+    "category": "交通",
+    "aliases": [
+      "youbike",
+      "微笑單車",
+      "公共自行車",
+      "自行車借還",
+      "單車站點"
+    ]
+  },
+  {
+    "id": "parking-locations",
+    "title": "臺北市停車場與車位",
+    "mode": "GUIDE",
+    "authority": "臺北市停車管理工程處",
+    "officialUrl": "https://pma.gov.taipei/",
+    "sourceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "scopeEvidenceUrl": "https://id.taipei/tpcd/about/features/connect",
+    "summary": "可透過臺北市停車管理工程處查詢停車場和相關資訊。剩餘車位與身障車格請以現場和官方資料為準。",
+    "category": "交通",
+    "aliases": [
+      "停車場",
+      "停車位",
+      "剩餘車位",
+      "身障停車位",
+      "無障礙停車"
+    ]
   }
 ]

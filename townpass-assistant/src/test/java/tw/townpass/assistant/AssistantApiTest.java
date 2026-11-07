@@ -1,6 +1,7 @@
 package tw.townpass.assistant;
 
 import com.sun.net.httpserver.HttpServer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,18 +19,22 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasItems;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class AssistantApiTest {
     private static final HttpServer feedServer = startFeed();
     @Autowired MockMvc mvc;
+    @Autowired ObjectMapper mapper;
+    @Autowired ServiceRepository catalog;
 
     @DynamicPropertySource
     static void settings(DynamicPropertyRegistry registry) {
@@ -44,8 +49,38 @@ class AssistantApiTest {
     @Test
     void listsSeededOfficialServices() throws Exception {
         mvc.perform(get("/api/v1/services"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(6))
-                .andExpect(jsonPath("$[2].mode").value("LIVE"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(55))
+                .andExpect(jsonPath("$[*].category").value(hasItems(
+                        "會員", "卡證", "帳務", "優惠", "市政服務", "訊息", "地圖與生活", "交通")))
+                .andExpect(jsonPath("$[?(@.id == 'bus-arrivals')].mode").value(hasItems("LIVE")));
+    }
+
+    @Test
+    void routesEveryGuideByItsCatalogAlias() throws Exception {
+        for (ServiceEntry entry : catalog.listWithAliases()) {
+            if (entry.mode.equals("GUIDE") && !entry.id.equals("road-report")) {
+                assertGuide("我想問" + entry.aliases.get(0), entry.id);
+            }
+        }
+    }
+
+    @Test
+    void handlesSpokenAliasesAndSpecificTopicsBeforeGeneralAppHelp() throws Exception {
+        assertGuide("臺北通的水費帳單怎麼查", "water-payment");
+        assertGuide("臺北通停車費收據怎麼找", "payment-history");
+        assertGuide("臺北通登入忘記密碼", "member-password");
+        assertGuide("我要查 ＹｏｕＢｉｋｅ 還車位", "youbike");
+        assertGuide("我要申辦台北通的新功能", "taipeipass-help");
+        assertGuide("附近垃圾車在哪裡", "trash-routes");
+    }
+
+    private void assertGuide(String question, String id) throws Exception {
+        mvc.perform(post("/api/v1/query").contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsBytes(Map.of("text", question))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.type").value("GUIDANCE"))
+                .andExpect(jsonPath("$.service.id").value(id))
+                .andExpect(jsonPath("$.service.officialUrl").exists());
     }
 
     @Test

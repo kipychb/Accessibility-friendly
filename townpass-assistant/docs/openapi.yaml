@@ -53,11 +53,15 @@ components:
   schemas:
     Service:
       type: object
-      required: [id, title, mode, authority, officialUrl, sourceUrl, scopeEvidenceUrl, summary]
+      required: [id, title, mode, category, aliases, authority, officialUrl, sourceUrl, scopeEvidenceUrl, summary]
       properties:
         id: {type: string}
         title: {type: string}
         mode: {type: string, enum: [LIVE, GUIDE]}
+        category: {type: string}
+        aliases:
+          type: array
+          items: {type: string}
         authority: {type: string}
         officialUrl: {type: string, format: uri}
         sourceUrl: {type: string, format: uri}
