@@ -527,14 +527,14 @@ function services(){
 function mine(){main.innerHTML=`<div class="settings"><h2>我的</h2><div class="service-card"><b>語音助理示範模式</b><p>本原型不連接個人臺北通帳號、不讀取會員或卡證資料，也不會自動送出陳情。</p></div><button class="secondary" id="resetChat" style="width:100%;margin-top:18px">開始新對話</button></div>`;$('resetChat').onclick=()=>{state.conversation=[];state.complaint=null;state.session='tp-'+Math.random().toString(36).slice(2,10);state.screen='home';render();toast('已開始新對話')}}
 // 設定頁底部「關於與技術揭露」：裝置端模型、語音辨識、資料來源與授權（競賽揭露要求）
 function aboutSection(){const items=isEn()?[
-  'On-device model: Gemma 4 E4B by Google (google/gemma-4-E4B-it-qat-q4_0-gguf), licensed Apache-2.0.',
+  'On-device model: Gemma 4 E4B by Google, instruction-tuned (source: Hugging Face google/gemma-4-E4B-it-qat-q4_0-gguf), licensed Apache-2.0.',
   'Format: QAT q4_0 GGUF. Runs with llama.cpp (via llamadart 0.18.0), fully offline on this device.',
   'The model only classifies what you are asking for. Every answer comes from official City data, never from the model.',
   'Speech recognition: when online, Android system speech service (via speech_to_text, BSD-3-Clause). You can switch to on-device Whisper above; it is also used when offline.',
   'Data source: Taipei City Government and TaipeiPASS official information; each answer shows the responsible agency. English descriptions were written in advance during development (not live AI).',
   'License: GNU AGPL-3.0. © 2026 城市解法.'
 ]:[
-  '裝置端模型：Gemma 4 E4B（Google，google/gemma-4-E4B-it-qat-q4_0-gguf），授權 Apache-2.0。',
+  '裝置端模型：Gemma 4 E4B 指令微調版（Google；來源：Hugging Face google/gemma-4-E4B-it-qat-q4_0-gguf），授權 Apache-2.0。',
   '格式：QAT q4_0 GGUF；推論框架 llama.cpp（經 llamadart 0.18.0），完全在本機離線執行。',
   '模型只做意圖分類（判斷您要查哪一項服務），答案一律來自官方資料，不由模型產生。',
   '語音辨識：有網路時使用 Android 系統語音服務（經 BSD 授權的 speech_to_text）；可在上方切換為裝置端 Whisper，離線時也會自動改用。',
