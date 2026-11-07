@@ -145,6 +145,11 @@ button:not(:disabled):active, .service-card a:active {
     <svg width="18" height="18" aria-hidden="true"><use href="#i-home"/></svg>
     <span id="backHomeText">回到首頁</span>
   </button>
+  <!-- 「對話紀錄」：只在首頁、且已有對話時顯示，回到剛才的對話視窗查看查過的問題 -->
+  <button id="toChat" class="home-button hide" type="button" style="margin-right:auto">
+    <svg width="18" height="18" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#i-bot"/></svg>
+    <span id="toChatText">對話紀錄</span>
+  </button>
   <button id="settingsBtn" class="round-icon" aria-label="設定"><svg width="23" height="23"><use href="#i-gear"/></svg></button>
 </header>
 <main id="main" class="main" aria-live="polite"></main>
@@ -305,7 +310,9 @@ function safe(text){return String(text??'').replace(/[&<>"']/g,c=>({'&':'&amp;',
 function toast(text){$('toast').textContent=text;$('toast').classList.remove('hide');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hide'),3400)}
 function top(){compose.classList.toggle('hide',state.screen!=='chat');
   // 回到首頁按鈕：首頁不顯示；文字跟著介面語言
-  $('backHome').classList.toggle('hide',state.screen==='home');$('backHomeText').textContent=tr('回到首頁','Home');}
+  $('backHome').classList.toggle('hide',state.screen==='home');$('backHomeText').textContent=tr('回到首頁','Home');
+  // 對話紀錄按鈕：首頁且已有對話時顯示，與「回到首頁」在同一個位置
+  $('toChat').classList.toggle('hide',!(state.screen==='home'&&state.conversation.length>0));$('toChatText').textContent=tr('對話紀錄','Chat history');}
 // 回到語音助理首頁：先停止收音與朗讀，避免回首頁後還在聽或還在念
 function goHome(){cancelRecognition();stopSpeak();state.awaitAnswer=false;state.apiContext=null;state.screen='home';render();main.scrollTop=0;}
 // 介面語言跟著設定頁的「語音語言」：選 English 時整個介面改成英文（固定文字，開發階段撰寫，不是 AI 翻譯）
@@ -546,7 +553,7 @@ function settings(){main.innerHTML=`<div class="settings"><h2>${tr('語音助理
   // 後端網址與開關只在 ?dev=1 時顯示，平常不更動
   if(DEV){let url=$('apiUrl').value.trim();if(url&&!/^https?:\/\//i.test(url)){toast(tr('請輸入完整的 http 或 https 網址','Please enter a full http or https URL'));return}state.apiUrl=url;state.useAPI=$('useAPI').checked;}  state.autoSpeak=$('autoSpeak').checked;state.offlineVoice=$('offlineVoice').checked;try{localStorage.setItem('offlineVoice',state.offlineVoice?'1':'0')}catch(e){}state.language=$('lang').value;state.screen='home';render();toast(tr('設定已儲存（本次開啟期間）','Settings saved (until you close this page)'))}}
 
-$('settingsBtn').onclick=()=>{cancelRecognition();state.screen='settings';render();main.scrollTop=0/* 開啟設定時捲回頂端，避免停在對話頁的捲動位置 */};$('backHome').onclick=goHome;$('sendBtn').onclick=()=>send(input.value);$('miniMic').onclick=startListening;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send(input.value)}});render();
+$('settingsBtn').onclick=()=>{cancelRecognition();state.screen='settings';render();main.scrollTop=0/* 開啟設定時捲回頂端，避免停在對話頁的捲動位置 */};$('backHome').onclick=goHome;$('toChat').onclick=()=>{cancelRecognition();stopSpeak();state.screen='chat';render()};$('sendBtn').onclick=()=>send(input.value);$('miniMic').onclick=startListening;input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send(input.value)}});render();
 })();
 </script>
 </body></html>
