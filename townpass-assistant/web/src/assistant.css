@@ -21,8 +21,11 @@ button:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-vis
 button svg, a svg { width: 23px; height: 23px; flex: none; }
 h1, h2, h3, p { margin: 0; }
 
+/* 填滿 TownPass WebView，並避開左右／手勢列等安全區域（沿用前端 A 的版面）。
+   頂部不留安全區域：TownPass 自己的標題列已處理狀態列，WebView 仍會回報狀態列高度造成空白。 */
 .phone {
-  width: min(100%, 430px);
+  width: 100%;
+  height: 100vh;
   height: 100dvh;
   margin: auto;
   position: relative;
@@ -30,17 +33,44 @@ h1, h2, h3, p { margin: 0; }
   flex-direction: column;
   background: linear-gradient(155deg, #fdfefe, var(--paper) 70%);
   overflow: hidden;
+  padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
 }
+/* 頂部固定列：左「回到首頁」、右「設定」，內容在下方捲動 */
 .app-bar {
-  min-height: 72px;
-  display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  flex-shrink: 0;
+  min-height: 60px;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 15px;
   border-bottom: 1px solid #edf4f5;
   background: #fff;
 }
+.home-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #cbe6e9;
+  border-radius: 13px;
+  background: #eaf7f9;
+  color: #14333f;
+  font-size: 1rem;
+  font-weight: 750;
+}
+.home-button svg { width: 20px; height: 20px; }
+/* 按下時填色，提供明確的按壓回饋 */
+button, a { touch-action: manipulation; }
+button:not(:disabled):active, a.primary:active, a.secondary:active {
+  background: var(--pressed-fill, #075661);
+  color: #fff;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .14);
+}
+.voice { --pressed-fill: #043d47; transition: transform .14s; }
+.voice:not(:disabled):active { transform: scale(.96); }
+.stop { --pressed-fill: #9d242c; }
 .app-bar h1 { font-size: 1.16rem; font-weight: 800; }
 .app-bar.quiet { display: flex; justify-content: center; }
 .icon-button {
@@ -52,7 +82,7 @@ h1, h2, h3, p { margin: 0; }
   border: 0;
   background: #eaf4f5;
 }
-.content { flex: 1; min-height: 0; overflow: auto; }
+.content { flex: 1; min-height: 0; overflow: auto; padding-bottom: env(safe-area-inset-bottom, 0px); }
 .tabs {
   display: flex;
   justify-content: space-around;
@@ -228,7 +258,7 @@ h1, h2, h3, p { margin: 0; }
 .welcome > p { margin-top: 17px; color: #53646e; font-size: .87rem; }
 
 @media (min-width: 540px) {
-  .phone { height: min(880px, calc(100dvh - 36px)); margin: 18px auto; border: 5px solid #d4e4e7; border-radius: 42px; box-shadow: 0 9px 30px #16414e22; }
+  .phone { width: min(100%, 430px); height: min(880px, calc(100dvh - 36px)); margin: 18px auto; border: 5px solid #d4e4e7; border-radius: 42px; box-shadow: 0 9px 30px #16414e22; }
 }
 @media (max-height: 750px) {
   .greeting { min-height: 128px; padding-top: 24px; }

@@ -43,6 +43,13 @@ async function navigate(page) {
   }
 }
 
+// 頂部「回到首頁」：停止收音與朗讀後回到大麥克風畫面（對話紀錄保留）
+function goHome() {
+  stopSpeaking()
+  navigate('home')
+  document.querySelector('.content')?.scrollTo(0, 0)
+}
+
 async function compose(value = '') {
   screen.value = 'record'
   text.value = value
@@ -152,8 +159,8 @@ onUnmounted(() => {
   <div class="phone">
     <header class="app-bar" :class="{ quiet: onboarding || !enabled }">
       <template v-if="enabled && !onboarding">
-        <button class="icon-button" aria-label="返回首頁" @click="navigate('home')"><Icon name="back" /></button>
-        <h1>台北通 語音助理</h1>
+        <!-- 頁面標題已由 TownPass 上方標題列顯示，這裡只放固定的首頁與設定按鈕 -->
+        <button class="home-button" type="button" @click="goHome"><Icon name="home" />回到首頁</button>
         <button class="icon-button" aria-label="設定" @click="navigate('settings')"><Icon name="settings" /></button>
       </template>
       <h1 v-else>首頁</h1>
@@ -249,17 +256,12 @@ onUnmounted(() => {
 
       <section v-else class="settings-panel">
         <h2>{{ screen === 'settings' ? '設定' : '我的' }}</h2>
+        <button class="secondary" @click="navigate('services')"><Icon name="grid" />可查詢的服務</button>
         <button class="secondary" @click="reset">開始新對話</button>
         <button class="secondary" @click="enabled = false; reset()">關閉語音助理模式</button>
       </section>
       <p v-if="notice || busy" class="status" role="status">{{ notice || '正在查詢…' }}</p>
     </main>
-
-    <nav v-if="enabled" class="tabs" aria-label="主要導覽" :inert="onboarding">
-      <button v-for="tab in [{ id: 'home', icon: 'home', label: '首頁' }, { id: 'services', icon: 'grid', label: '服務' }, { id: 'profile', icon: 'person', label: '我的' }]"
-        :key="tab.id" :class="{ active: tab.id === screen || tab.id === 'home' && ['record', 'reply'].includes(screen) }"
-        @click="navigate(tab.id)"><Icon :name="tab.icon" />{{ tab.label }}</button>
-    </nav>
 
     <div v-if="onboarding" class="scrim">
       <section class="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
